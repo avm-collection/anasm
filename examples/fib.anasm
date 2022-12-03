@@ -1,0 +1,30 @@
+# output <REGISTER> means that we push it onto the stack, because at the end we
+# dump the entire stack and use that as a tool to output results
+
+.entry
+	mov: &r1, 0     # r1 = 0
+	mov: &r2, 1     # r2 = 1
+
+	psr: &r1        # output r1
+	psr: &r2        # output r2
+
+.loop
+	psr: &r1        # r3 = r1 + r2
+	psr: &r2
+	add
+
+	por: &r3
+	psr: &r3        # output r3
+
+	psr: &r2        # r1 = r2
+	por: &r1
+	psr: &r3        # r2 = r3
+	por: &r2
+
+	psr: &r3        # if r3 < 50 then continue
+	psh: 0, 50
+	les
+
+	jnz: 0, @loop
+
+	dum             # output the sequence
