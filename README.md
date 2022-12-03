@@ -1,5 +1,5 @@
 <p align="center">
-	<img width="350px" src="res/logo.png"/>
+	<img width="400px" src="res/logo.png"/>
 	<p align="center">An assembler for avm in Go</p>
 </p>
 <p align="center">
