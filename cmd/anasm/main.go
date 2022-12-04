@@ -9,6 +9,8 @@ import (
 )
 
 // 1.0.0: First release, supports avm version 1.0.0
+// 1.1.0: Added instruction argument safety
+// 1.2.0: Added an option to create an executable output file
 
 var out = flag.String("o",        "a.out", "Path of the output binary")
 var v   = flag.Bool("version",    false,   "Show the version")
@@ -18,7 +20,7 @@ const (
 	appName = "anasm"
 
 	versionMajor = 1
-	versionMinor = 1
+	versionMinor = 2
 	versionPatch = 0
 )
 
