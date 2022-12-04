@@ -22,7 +22,7 @@ const (
 )
 
 func usage() {
-	fmt.Printf("Usage: %v [FILE...] [OPTIONS]\n", os.Args[0])
+	fmt.Printf("Usage: %v [OPTIONS] [FILE]\n", os.Args[0])
 	fmt.Println("Options:")
 
 	flag.PrintDefaults()
