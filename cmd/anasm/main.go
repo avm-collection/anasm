@@ -17,7 +17,7 @@ const (
 	appName = "anasm"
 
 	versionMajor = 1
-	versionMinor = 0
+	versionMinor = 1
 	versionPatch = 0
 )
 

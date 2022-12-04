@@ -22,9 +22,9 @@
 	por: &r2
 
 	psr: &r3        # if r3 < 50 then continue
-	psh: 0, 50
+	psh: 50
 	les
 
-	jnz: 0, @loop
+	jnz: @loop
 
 	dum             # output the sequence

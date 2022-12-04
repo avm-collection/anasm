@@ -39,7 +39,7 @@ See [the `examples` folder](./examples) for example programs
 - [X] Lexer
 - [X] Compiling basic instructions
 - [X] Labels
-- [ ] Instruction argument safety
+- [X] Instruction argument safety
 - [ ] Macros
 
 ## Documentation

@@ -1,6 +1,6 @@
 .entry          # program entry point
-	psh: 0, 5   # push 5 to the stack
-	psh: 0, 2   # push 2 to the stack
+	psh: 5      # push 5 to the stack
+	psh: 2      # push 2 to the stack
 	add         # add them together
 	por: &ex    # move the result into the exitcode register
 

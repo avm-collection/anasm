@@ -11,10 +11,6 @@ import (
 	"github.com/LordOfTrident/anasm/internal/lexer"
 )
 
-// TODO: Implement instruction formats for safety
-//       Right now, all instructions can take any arguments and there is no check if the type is
-//       correct
-
 type Word uint64
 
 const (
@@ -61,91 +57,109 @@ const (
 	opHlt = 0xFF
 )
 
+type argType int
 const (
-	reg1 = iota
-	reg2
-	reg3
-	reg4
-	reg5
-	reg6
-	reg7
-	reg8
-	reg9
-	reg10
-	reg11
-	reg12
-	reg13
-	reg14
-	reg15
-	reg16
-
-	regIp // Instruction pointer
-	regSp // Stack pointer
-	regSb // Stack base pointer
-	regEx // Exitcode
+	argNone = iota
+	argNum
+	argReg
 )
 
+func (t argType) String() string {
+	switch t {
+	case argNone: return "none"
+	case argNum:  return "number"
+	case argReg:  return "register"
+	}
+
+	panic("Unknown argType")
+}
+
+func tokTypeToArgType(tokType token.Type) argType {
+	switch tokType {
+	case token.Hex, token.Dec, token.LabelRef: return argNum
+	case token.Reg:                            return argReg
+
+	default: return argNone
+	}
+}
+
+func isTokTypeOfArgType(tokType token.Type, argType argType) bool {
+	switch argType {
+	case argNum: return tokType == token.Hex || tokType == token.Dec || tokType == token.LabelRef
+	case argReg: return tokType == token.Reg
+	}
+
+	return false
+}
+
+type Inst struct {
+	Op   byte
+	Args []argType
+
+	FirstArgIsData bool
+}
+
 var (
-	ops = map[string]byte{
-		"nop": opNop,
+	insts = map[string]Inst{
+		"nop": Inst{Op: 0x00},
 
-		"mov": opMov,
-		"mor": opMor,
+		"mov": Inst{Op: 0x10, Args: []argType{argReg, argNum}},
+		"mor": Inst{Op: 0x11, Args: []argType{argReg, argReg}},
 
-		"psh": opPsh,
-		"psr": opPsr,
-		"pop": opPop,
-		"por": opPor,
+		"psh": Inst{Op: 0x12, Args: []argType{argNum}, FirstArgIsData: true},
+		"psr": Inst{Op: 0x13, Args: []argType{argReg}},
+		"pop": Inst{Op: 0x14},
+		"por": Inst{Op: 0x15, Args: []argType{argReg}},
 
-		"add": opAdd,
-		"sub": opSub,
+		"add": Inst{Op: 0x20},
+		"sub": Inst{Op: 0x21},
 
-		"mul": opMul,
-		"div": opDiv,
-		"mod": opMod,
+		"mul": Inst{Op: 0x22},
+		"div": Inst{Op: 0x23},
+		"mod": Inst{Op: 0x24},
 
-		"inc": opInc,
-		"dec": opDec,
+		"inc": Inst{Op: 0x25},
+		"dec": Inst{Op: 0x26},
 
-		"jmp": opJmp,
-		"jnz": opJnz,
+		"jmp": Inst{Op: 0x30, Args: []argType{argNum}, FirstArgIsData: true},
+		"jnz": Inst{Op: 0x31, Args: []argType{argNum}, FirstArgIsData: true},
 
-		"equ": opEqu,
-		"neq": opNeq,
-		"grt": opGrt,
-		"geq": opGeq,
-		"les": opLes,
-		"leq": opLeq,
+		"equ": Inst{Op: 0x32},
+		"neq": Inst{Op: 0x33},
+		"grt": Inst{Op: 0x34},
+		"geq": Inst{Op: 0x35},
+		"les": Inst{Op: 0x36},
+		"leq": Inst{Op: 0x37},
 
-		"dup": opDup,
-		"swp": opSwp,
+		"dup": Inst{Op: 0x40},
+		"swp": Inst{Op: 0x41},
 
-		"dum": opDum,
-		"hlt": opHlt,
+		"dum": Inst{Op: 0xF0},
+		"hlt": Inst{Op: 0xFF},
 	}
 
 	regs = map[string]byte{
-		"r1":  reg1,
-		"r2":  reg2,
-		"r3":  reg3,
-		"r4":  reg4,
-		"r5":  reg5,
-		"r6":  reg6,
-		"r7":  reg7,
-		"r8":  reg8,
-		"r9":  reg9,
-		"r10": reg10,
-		"r11": reg11,
-		"r12": reg12,
-		"r13": reg13,
-		"r14": reg14,
-		"r15": reg15,
-		"r16": reg16,
+		"r1":  0x00,
+		"r2":  0x01,
+		"r3":  0x02,
+		"r4":  0x03,
+		"r5":  0x04,
+		"r6":  0x05,
+		"r7":  0x06,
+		"r8":  0x07,
+		"r9":  0x08,
+		"r10": 0x09,
+		"r11": 0x0a,
+		"r12": 0x0b,
+		"r13": 0x0c,
+		"r14": 0x0d,
+		"r15": 0x0e,
+		"r16": 0x0f,
 
-		"ip": regIp,
-		"sp": regSp,
-		"sb": regSb,
-		"ex": regEx,
+		"ip": 0x10,
+		"sp": 0x11,
+		"sb": 0x12,
+		"ex": 0x13,
 	}
 )
 
@@ -169,6 +183,10 @@ func New(input, path string) *Compiler {
 
 func (c *Compiler) Error(format string, args... interface{}) error {
 	return fmt.Errorf("At %v: %v", c.tok.Where, fmt.Sprintf(format, args...))
+}
+
+func (c *Compiler) ErrorFrom(where token.Where, format string, args... interface{}) error {
+	return fmt.Errorf("At %v: %v", where, fmt.Sprintf(format, args...))
 }
 
 func fileWriteWord(f *os.File, word Word) error {
@@ -236,52 +254,86 @@ func (c *Compiler) writeInst(op byte, reg byte, data Word) {
 }
 
 func (c *Compiler) compileInst() error {
-	op, ok := ops[c.tok.Data]
+	tok := c.tok
+
+	inst, ok := insts[tok.Data]
 	if !ok {
-		return c.Error("'%v' is not an instruction", c.tok.Data)
+		return c.Error("'%v' is not an instruction", tok.Data)
 	}
 
-	if c.next(); c.tok.Type != token.Colon {
-		c.writeInst(op, 0, 0)
-
-		return nil
-	}
 	c.next()
-
-	// Register
-	word, err := c.argToWord()
+	args, err := c.getInstArgs()
 	if err != nil {
 		return err
 	}
-	reg := byte(word)
 
-	if c.next(); c.tok.Type != token.Comma {
-		c.writeInst(op, reg, 0)
-
-		return nil
-	}
-	c.next()
-
-	// Data
-	word, err = c.argToWord()
-	if err != nil {
-		return err
-	}
-	data := word
-
-	if c.next(); c.tok.Type == token.Comma {
-		return c.Error("Instructions can have at max 2 arguments")
+	if len(args) != len(inst.Args) {
+		return c.ErrorFrom(tok.Where, "Instruction '%v' expected %v argument(s), got %v",
+		                   tok.Data, len(inst.Args), len(args))
 	}
 
-	c.writeInst(op, reg, data)
+	for i := 0; i < len(args); i ++ {
+		if !isTokTypeOfArgType(args[i].Type, inst.Args[i]) {
+			return c.ErrorFrom(args[i].Where, "Argument expected to be '%v', got '%v'",
+			                   inst.Args[i], tokTypeToArgType(args[i].Type))
+		}
+	}
+
+	var reg, data Word
+
+	if len(args) > 0 {
+		reg, err = c.argToWord(args[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(args) > 1 {
+		data, err = c.argToWord(args[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	if inst.FirstArgIsData {
+		data = reg
+		reg  = 0
+	}
+
+	c.writeInst(inst.Op, byte(reg), data)
 
 	return nil
 }
 
-func (c *Compiler) argToWord() (Word, error) {
-	switch c.tok.Type {
+func (c *Compiler) getInstArgs() ([]token.Token, error) {
+	args := []token.Token{}
+
+	if c.tok.Type != token.Colon {
+		return args, nil
+	}
+	c.next()
+
+	for {
+		if !c.tok.IsArg() {
+			return args, c.Error("Expected instruction argument, got %v", c.tok)
+		}
+
+		args = append(args, c.tok)
+
+		if c.next(); c.tok.Type != token.Comma {
+			break
+		}
+
+		c.next()
+	}
+
+	return args, nil
+}
+
+func (c *Compiler) argToWord(tok token.Token) (Word, error) {
+	switch tok.Type {
 	case token.Dec:
-		i64, err := strconv.ParseInt(c.tok.Data, 10, 64)
+		i64, err := strconv.ParseInt(tok.Data, 10, 64)
 		if err != nil {
 			panic(err) // This should never happen
 		}
@@ -289,30 +341,31 @@ func (c *Compiler) argToWord() (Word, error) {
 		return Word(i64), nil
 
 	case token.Hex:
-		i64, err := strconv.ParseInt(c.tok.Data, 16, 64)
+		i64, err := strconv.ParseInt(tok.Data, 16, 64)
 		if err != nil {
 			panic(err) // This should never happen
 		}
 
 		return Word(i64), nil
 
-	case token.Reg:
-		i64, ok := regs[c.tok.Data]
-		if !ok {
-			return 0, c.Error("'%v' is not a valid register", c.tok.Data)
-		}
-
-		return Word(i64), nil
-
 	case token.LabelRef:
-		i64, ok := c.labels[c.tok.Data]
+		i64, ok := c.labels[tok.Data]
 		if !ok {
-			return 0, c.Error("Label '%v' was not declared", c.tok.Data)
+			return 0, c.Error("Label '%v' was not declared", tok.Data)
 		}
 
 		return Word(i64), nil
 
-	default: return 0, c.Error("Expected argument, instead got %v", c.tok)
+
+	case token.Reg:
+		i64, ok := regs[tok.Data]
+		if !ok {
+			return 0, c.Error("'%v' is not a valid register", tok.Data)
+		}
+
+		return Word(i64), nil
+
+	default: return 0, c.Error("Expected register argument, instead got %v", tok)
 	}
 }
 
@@ -335,7 +388,7 @@ func (c *Compiler) preproc() error {
 		// Eat and evaluate the preprocessor, leave out the other tokens
 		switch tok.Type {
 		case token.Word:
-			if _, ok := ops[tok.Data]; ok {
+			if _, ok := insts[tok.Data]; ok {
 				c.pos ++
 			}
 
