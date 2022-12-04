@@ -198,7 +198,7 @@ func fileWriteWord(f *os.File, word Word) error {
 	return err
 }
 
-func (c *Compiler) CompileToBinary(path string) error {
+func (c *Compiler) CompileToBinary(path string, executable bool) error {
 	if err := c.preproc(); err != nil {
 		return err
 	}
@@ -212,6 +212,13 @@ func (c *Compiler) CompileToBinary(path string) error {
 		return err
 	}
 	defer f.Close()
+
+	if executable {
+		// Shebang
+		f.Write([]byte("#!/usr/bin/avm\n"))
+
+		os.Chmod(path, 0777)
+	}
 
 	// Metadata
 	f.Write([]byte{'A', 'V', 'M'})

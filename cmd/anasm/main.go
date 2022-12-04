@@ -10,8 +10,9 @@ import (
 
 // 1.0.0: First release, supports avm version 1.0.0
 
-var out = flag.String("o",     "a.out", "Path of the output binary")
-var v   = flag.Bool("version", false,   "Show the version")
+var out = flag.String("o",        "a.out", "Path of the output binary")
+var v   = flag.Bool("version",    false,   "Show the version")
+var e   = flag.Bool("executable", true,    "Make the output file executable")
 
 const (
 	appName = "anasm"
@@ -37,6 +38,7 @@ func init() {
 
 	// Aliases
 	flag.BoolVar(v, "v", *v, "Alias for -version")
+	flag.BoolVar(e, "e", *e, "Alias for -executable")
 
 	flag.Parse()
 }
@@ -65,7 +67,7 @@ func main() {
 
 	c := compiler.New(string(data), path)
 
-	if err := c.CompileToBinary(*out); err != nil {
+	if err := c.CompileToBinary(*out, *e); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err.Error())
 	}
 }
