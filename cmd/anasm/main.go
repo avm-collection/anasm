@@ -24,6 +24,14 @@ const (
 	versionPatch = 0
 )
 
+func printError(format string, args... interface{}) {
+	fmt.Fprintf(os.Stderr, "Error: %v\n", fmt.Sprintf(format, args...))
+}
+
+func printTry(arg string) {
+	fmt.Fprintf(os.Stderr, "Try '%v %v'\n", os.Args[0], arg)
+}
+
 func usage() {
 	fmt.Printf("Usage: %v [OPTIONS] [FILE]\n", os.Args[0])
 	fmt.Println("Options:")
@@ -53,7 +61,8 @@ func main() {
 	}
 
 	if len(flag.Args()) == 0 {
-		fmt.Fprintf(os.Stderr, "Error: No input file\nTry '%v -h'\n", os.Args[0])
+		printError("No input file")
+		printTry("-h")
 
 		os.Exit(1)
 	}
@@ -62,7 +71,8 @@ func main() {
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Could not open file '%v'\n", path)
+		printError("Could not open file '%v'", path)
+		printTry("-h")
 
 		os.Exit(1)
 	}
@@ -70,6 +80,6 @@ func main() {
 	c := compiler.New(string(data), path)
 
 	if err := c.CompileToBinary(*out, *e); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err.Error())
+		printError(err.Error())
 	}
 }
