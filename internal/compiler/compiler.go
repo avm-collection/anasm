@@ -19,44 +19,6 @@ const (
 	VersionPatch = 0
 )
 
-const (
-	opNop = 0x00
-
-	opMov = 0x10
-	opMor = 0x11
-
-	opPsh = 0x12
-	opPsr = 0x13
-	opPop = 0x14
-	opPor = 0x15
-
-	opAdd = 0x20
-	opSub = 0x21
-
-	opMul = 0x22
-	opDiv = 0x23
-	opMod = 0x24
-
-	opInc = 0x25
-	opDec = 0x26
-
-	opJmp = 0x30
-	opJnz = 0x31
-
-	opEqu = 0x32
-	opNeq = 0x33
-	opGrt = 0x34
-	opGeq = 0x35
-	opLes = 0x36
-	opLeq = 0x37
-
-	opDup = 0x40
-	opSwp = 0x41
-
-	opDum = 0xF0
-	opHlt = 0xFF
-)
-
 type argType int
 const (
 	argNone = iota
@@ -131,6 +93,9 @@ var (
 		"les": Inst{Op: 0x36},
 		"leq": Inst{Op: 0x37},
 
+		"cal": Inst{Op: 0x38, Args: []argType{argNum}, FirstArgIsData: true},
+		"ret": Inst{Op: 0x39},
+
 		"dup": Inst{Op: 0x40},
 		"swp": Inst{Op: 0x41},
 
@@ -165,8 +130,8 @@ var (
 
 type Compiler struct {
 	toks []token.Token
-	tok  token.Token
 	pos  int
+	tok  token.Token
 
 	size, entry Word
 
