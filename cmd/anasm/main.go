@@ -8,9 +8,9 @@ import (
 	"github.com/LordOfTrident/anasm/internal/compiler"
 )
 
-// 1.0.0: First release, supports avm version 1.0.0
-// 1.1.0: Added instruction argument safety
-// 1.2.0: Added an option to create an executable output file
+// 0.1.0: Can compile to avm version 0.2.0
+// 0.2.0: Added instruction argument safety
+// 0.3.0: Added an option to create an executable output file
 
 var out = flag.String("o",        "a.out", "Path of the output binary")
 var v   = flag.Bool("version",    false,   "Show the version")
@@ -19,8 +19,8 @@ var e   = flag.Bool("executable", true,    "Make the output file executable")
 const (
 	appName = "anasm"
 
-	versionMajor = 1
-	versionMinor = 2
+	versionMajor = 0
+	versionMinor = 3
 	versionPatch = 0
 )
 
