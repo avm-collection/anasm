@@ -16,7 +16,7 @@ type Word uint64
 const (
 	VersionMajor = 0
 	VersionMinor = 3
-	VersionPatch = 0
+	VersionPatch = 0 // Not keeping track of the patch
 )
 
 type argType int
