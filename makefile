@@ -6,7 +6,7 @@ INSTALL = /usr/bin/anasm
 
 GO = go
 
-$(OUT):
+compile:
 	$(GO) build -o $(OUT) $(CMD)
 
 $(BIN):
@@ -15,7 +15,7 @@ $(BIN):
 run:
 	$(GO) run $(CMD)
 
-install: $(OUT)
+install:
 	cp $(OUT) $(INSTALL)
 
 clean:

@@ -11,17 +11,23 @@ import (
 // 0.1.0: Can compile to avm version 0.2.0
 // 0.2.0: Added instruction argument safety
 // 0.3.0: Added an option to create an executable output file
+// 0.4.0: Support avm 0.3.0
+// 0.4.1: Parameter improvements, flags can now come after parameters
 
-var out = flag.String("o",        "a.out", "Path of the output binary")
-var v   = flag.Bool("version",    false,   "Show the version")
-var e   = flag.Bool("executable", true,    "Make the output file executable")
+var (
+	out = flag.String("o",        "a.out", "Path of the output binary")
+	v   = flag.Bool("version",    false,   "Show the version")
+	e   = flag.Bool("executable", true,    "Make the output file executable")
+
+	args []string
+)
 
 const (
 	appName = "anasm"
 
 	versionMajor = 0
-	versionMinor = 3
-	versionPatch = 0
+	versionMinor = 4
+	versionPatch = 1
 )
 
 func printError(format string, args... interface{}) {
@@ -33,7 +39,7 @@ func printTry(arg string) {
 }
 
 func usage() {
-	fmt.Printf("Usage: %v [OPTIONS] [FILE]\n", os.Args[0])
+	fmt.Printf("Usage: %v [FILE] [OPTIONS]\n", os.Args[0])
 	fmt.Println("Options:")
 
 	flag.PrintDefaults()
@@ -51,6 +57,22 @@ func init() {
 	flag.BoolVar(e, "e", *e, "Alias for -executable")
 
 	flag.Parse()
+
+	args = flag.Args()
+	for i := 0; i < len(flag.Args()); i ++ {
+		if len(flag.Args()[i]) == 0 {
+			continue
+		}
+
+		if flag.Args()[i][0] != '-' {
+			continue
+		}
+
+		args = flag.Args()[:i]
+		flag.CommandLine.Parse(flag.Args()[i:])
+
+		break
+	}
 }
 
 func main() {
@@ -60,14 +82,19 @@ func main() {
 		return
 	}
 
-	if len(flag.Args()) == 0 {
+	if len(args) == 0 {
 		printError("No input file")
+		printTry("-h")
+
+		os.Exit(1)
+	} else if len(args) > 1 {
+		printError("Unexpected argument '%v'", args[1])
 		printTry("-h")
 
 		os.Exit(1)
 	}
 
-	path := flag.Args()[0]
+	path := args[0]
 
 	data, err := os.ReadFile(path)
 	if err != nil {

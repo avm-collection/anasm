@@ -30,7 +30,8 @@ An assembler for the [avm virtual machine](https://github.com/LordOfTrident/avm)
 ```sh
 $ make
 $ make install
-$ anasm -o=<OUTPUT PATH> <PROGRAM>
+$ anasm ./examples/fib.anasm -o ./fib
+$ ./fib
 ```
 
 See [the `examples` folder](./examples) for example programs
