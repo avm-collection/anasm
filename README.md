@@ -6,11 +6,11 @@
 	<a href="./LICENSE">
 		<img alt="License" src="https://img.shields.io/badge/license-GPL-blue?color=7aca00"/>
 	</a>
-	<a href="https://github.com/LordOfTrident/anasm/issues">
-		<img alt="Issues" src="https://img.shields.io/github/issues/LordOfTrident/anasm?color=0088ff"/>
+	<a href="https://github.com/avm-collection/anasm/issues">
+		<img alt="Issues" src="https://img.shields.io/github/issues/avm-collection/anasm?color=0088ff"/>
 	</a>
-	<a href="https://github.com/LordOfTrident/anasm/pulls">
-		<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/LordOfTrident/anasm?color=0088ff"/>
+	<a href="https://github.com/avm-collection/anasm/pulls">
+		<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/avm-collection/anasm?color=0088ff"/>
 	</a>
 	<br><br><br>
 </p>
@@ -24,7 +24,7 @@
 * [Make](#make)
 
 ## Introduction
-An assembler for the [avm virtual machine](https://github.com/LordOfTrident/avm) written in Go
+An assembler for the [avm virtual machine](https://github.com/avm-collection/avm) written in Go
 
 ## Quickstart
 ```sh

@@ -8,8 +8,8 @@ import (
 	"math"
 	"encoding/binary"
 
-	"github.com/LordOfTrident/anasm/internal/token"
-	"github.com/LordOfTrident/anasm/internal/lexer"
+	"github.com/avm-collection/anasm/internal/token"
+	"github.com/avm-collection/anasm/internal/lexer"
 )
 
 type Word uint64

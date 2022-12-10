@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"flag"
 
-	"github.com/LordOfTrident/anasm/internal/config"
-	"github.com/LordOfTrident/anasm/internal/compiler"
+	"github.com/avm-collection/anasm/internal/config"
+	"github.com/avm-collection/anasm/internal/compiler"
 )
 
 // 0.1.0: Can compile to avm version 0.2

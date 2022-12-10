@@ -1,6 +1,6 @@
 package lexer
 
-import "github.com/LordOfTrident/anasm/internal/token"
+import "github.com/avm-collection/anasm/internal/token"
 
 const EOF = '\x00'
 
