@@ -24,12 +24,16 @@ func New(input, path string) *Lexer {
 
 func isWordCh(ch byte) bool {
 	return (ch >= 'a' && ch <= 'z') || ch == '$' ||
-	       (ch >= 'A' && ch <= 'Z') || ch == '-' ||
-	       (ch >= '0' && ch <= '9') || ch == '_'
+	       (ch >= 'A' && ch <= 'Z') || ch == '_' ||
+	       (ch >= '0' && ch <= '9')
 }
 
 func isDecDigit(ch byte) bool {
 	return ch >= '0' && ch <= '9'
+}
+
+func isOctDigit(ch byte) bool {
+	return ch >= '0' && ch <= '7'
 }
 
 func isHexDigit(ch byte) bool {
@@ -70,6 +74,8 @@ func (l *Lexer) NextToken() (tok token.Token) {
 			tok = token.Token{Type: token.Comma, Data: ","}
 			l.next()
 
+		case '-': tok = l.lexNum()
+
 		default:
 			if isDecDigit(l.ch) {
 				tok = l.lexNum()
@@ -98,6 +104,11 @@ func (l *Lexer) lexNum() token.Token {
 		l.next()
 
 		return l.lexHex()
+	} else if l.ch == '0' && (l.peek() == 'o' || l.peek() == 'O') {
+		l.next()
+		l.next()
+
+		return l.lexOct()
 	} else {
 		return l.lexDec()
 	}
@@ -120,12 +131,12 @@ func (l *Lexer) lexHex() token.Token {
 	return token.Token{Type: token.Hex, Data: str}
 }
 
-func (l *Lexer) lexDec() token.Token {
+func (l *Lexer) lexOct() token.Token {
 	str := ""
 
 	for !isWhitespace(l.ch) && l.ch != ',' && l.ch != ':' {
-		if !isDecDigit(l.ch) {
-			return token.NewError(l.where, "Unexpected character '%v' in decimal number",
+		if !isHexDigit(l.ch) {
+			return token.NewError(l.where, "Unexpected character '%v' in octal number",
 			                      string(l.ch))
 		}
 
@@ -134,7 +145,42 @@ func (l *Lexer) lexDec() token.Token {
 		l.next()
 	}
 
-	return token.Token{Type: token.Dec, Data: str}
+	return token.Token{Type: token.Oct, Data: str}
+}
+
+func (l *Lexer) lexDec() token.Token {
+	str     := ""
+	float   := false
+	atStart := true
+
+	for !isWhitespace(l.ch) && l.ch != ',' && l.ch != ':' {
+		if l.ch == '.' {
+			if float {
+				return token.NewError(l.where, "Unexpected '.' in float number")
+			}
+
+			float = true
+		} else if !isDecDigit(l.ch) || l.ch == '-' {
+			if !(l.ch == '-' && atStart) {
+				return token.NewError(l.where, "Unexpected character '%v' in decimal number",
+				                      string(l.ch))
+			}
+		}
+
+		str += string(l.ch)
+
+		l.next()
+
+		if atStart {
+			atStart = false
+		}
+	}
+
+	if float {
+		return token.Token{Type: token.Float, Data: str}
+	} else {
+		return token.Token{Type: token.Dec, Data: str}
+	}
 }
 
 func (l *Lexer) lexLabel() token.Token {

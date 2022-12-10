@@ -13,8 +13,9 @@
 	psr: &r2
 	add
 
+	dup
+	prt             # output r3
 	por: &r3
-	psr: &r3        # output r3
 
 	psr: &r2        # r1 = r2
 	por: &r1
@@ -26,5 +27,3 @@
 	les
 
 	jnz: @loop
-
-	dum             # output the sequence

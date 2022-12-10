@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"bytes"
+	"math"
 	"encoding/binary"
 
 	"github.com/LordOfTrident/anasm/internal/token"
@@ -15,8 +16,8 @@ type Word uint64
 
 const (
 	VersionMajor = 0
-	VersionMinor = 3
-	VersionPatch = 0 // Not keeping track of the patch
+	VersionMinor = 4
+	VersionPatch // Not keeping track of the patch
 )
 
 type argType int
@@ -38,8 +39,9 @@ func (t argType) String() string {
 
 func tokTypeToArgType(tokType token.Type) argType {
 	switch tokType {
-	case token.Hex, token.Dec, token.LabelRef: return argNum
-	case token.Reg:                            return argReg
+	case token.Hex,   token.Dec, token.Oct,
+	     token.Float, token.LabelRef: return argNum
+	case token.Reg:                   return argReg
 
 	default: return argNone
 	}
@@ -47,7 +49,8 @@ func tokTypeToArgType(tokType token.Type) argType {
 
 func isTokTypeOfArgType(tokType token.Type, argType argType) bool {
 	switch argType {
-	case argNum: return tokType == token.Hex || tokType == token.Dec || tokType == token.LabelRef
+	case argNum: return tokType == token.Hex   || tokType == token.Dec || tokType == token.Oct ||
+	                    tokType == token.Float || tokType == token.LabelRef
 	case argReg: return tokType == token.Reg
 	}
 
@@ -83,8 +86,20 @@ var (
 		"inc": Inst{Op: 0x25},
 		"dec": Inst{Op: 0x26},
 
+		"fad": Inst{Op: 0x27},
+		"fsb": Inst{Op: 0x28},
+
+		"fmu": Inst{Op: 0x29},
+		"fdi": Inst{Op: 0x2a},
+
+		"fin": Inst{Op: 0x2b},
+		"fde": Inst{Op: 0x2c},
+
 		"jmp": Inst{Op: 0x30, Args: []argType{argNum}, FirstArgIsData: true},
 		"jnz": Inst{Op: 0x31, Args: []argType{argNum}, FirstArgIsData: true},
+
+		"cal": Inst{Op: 0x38, Args: []argType{argNum}, FirstArgIsData: true},
+		"ret": Inst{Op: 0x39},
 
 		"equ": Inst{Op: 0x32},
 		"neq": Inst{Op: 0x33},
@@ -93,13 +108,28 @@ var (
 		"les": Inst{Op: 0x36},
 		"leq": Inst{Op: 0x37},
 
-		"cal": Inst{Op: 0x38, Args: []argType{argNum}, FirstArgIsData: true},
-		"ret": Inst{Op: 0x39},
+		"ueq": Inst{Op: 0x3a},
+		"une": Inst{Op: 0x3b},
+		"ugr": Inst{Op: 0x3c},
+		"ugq": Inst{Op: 0x3d},
+		"ule": Inst{Op: 0x3e},
+		"ulq": Inst{Op: 0x3f},
 
-		"dup": Inst{Op: 0x40},
-		"swp": Inst{Op: 0x41},
+		"feq": Inst{Op: 0x40},
+		"fne": Inst{Op: 0x41},
+		"fgr": Inst{Op: 0x42},
+		"fgq": Inst{Op: 0x43},
+		"fle": Inst{Op: 0x44},
+		"flq": Inst{Op: 0x45},
 
-		"dum": Inst{Op: 0xF0},
+		"dup": Inst{Op: 0x50},
+		"swp": Inst{Op: 0x51},
+		"emp": Inst{Op: 0x52},
+
+		"dmp": Inst{Op: 0xF0},
+		"prt": Inst{Op: 0xF1},
+		"fpr": Inst{Op: 0xF2},
+
 		"hlt": Inst{Op: 0xFF},
 	}
 
@@ -319,6 +349,22 @@ func (c *Compiler) argToWord(tok token.Token) (Word, error) {
 		}
 
 		return Word(i64), nil
+
+	case token.Oct:
+		i64, err := strconv.ParseInt(tok.Data, 8, 64)
+		if err != nil {
+			panic(err) // This should never happen
+		}
+
+		return Word(i64), nil
+
+	case token.Float:
+		i64, err := strconv.ParseFloat(tok.Data, 8)
+		if err != nil {
+			panic(err) // This should never happen
+		}
+
+		return Word(math.Float64bits(i64)), nil
 
 	case token.LabelRef:
 		i64, ok := c.labels[tok.Data]

@@ -1,0 +1,11 @@
+.entry
+	psh: 3.14 # Print 3.14
+	fpr
+
+	psh: -24 # Print -24
+	prt
+
+	psh: 3.14 # Print 6.28
+	dup
+	fad
+	fpr

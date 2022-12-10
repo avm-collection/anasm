@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"flag"
 
+	"github.com/LordOfTrident/anasm/internal/config"
 	"github.com/LordOfTrident/anasm/internal/compiler"
 )
 
-// 0.1.0: Can compile to avm version 0.2.0
+// 0.1.0: Can compile to avm version 0.2
 // 0.2.0: Added instruction argument safety
 // 0.3.0: Added an option to create an executable output file
-// 0.4.0: Support avm 0.3.0
+// 0.4.0: Support avm 0.3
 // 0.4.1: Parameter improvements, flags can now come after parameters
+// 0.5.1: Add octal and float instruction arguments
+// 0.6.1: Support avm 0.4
 
 var (
 	out = flag.String("o",        "a.out", "Path of the output binary")
@@ -20,14 +23,6 @@ var (
 	e   = flag.Bool("executable", true,    "Make the output file executable")
 
 	args []string
-)
-
-const (
-	appName = "anasm"
-
-	versionMajor = 0
-	versionMinor = 4
-	versionPatch = 1
 )
 
 func printError(format string, args... interface{}) {
@@ -46,7 +41,8 @@ func usage() {
 }
 
 func version() {
-	fmt.Printf("%v %v.%v.%v\n", appName, versionMajor, versionMinor, versionPatch)
+	fmt.Printf("%v %v.%v.%v\n", config.AppName,
+	           config.VersionMajor, config.VersionMinor, config.VersionPatch)
 }
 
 func init() {
