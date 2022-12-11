@@ -1,11 +1,11 @@
 .entry
-	psh: 3.14 # Print 3.14
-	fpr
+	psh 3.14    # Print 3.14
+	fpr         # Float print
 
-	psh: -24 # Print -24
-	prt
+	psh -24     # Print -24
+	prt         # Signed int print
 
-	psh: 3.14 # Print 6.28
-	dup
-	fad
+	psh 3.14    # Print 6.28
+	dup 0
+	fad         # Float add
 	fpr

@@ -15,9 +15,6 @@ type Type int
 const (
 	EOF = iota
 
-	Comma
-	Colon
-
 	Word
 	Label
 
@@ -26,7 +23,6 @@ const (
 	Oct
 	Float
 
-	Reg
 	LabelRef // Label reference, for example 'jmp @label'
 
 	Error
@@ -34,15 +30,12 @@ const (
 )
 
 func (t Type) String() string {
-	if count != 12 {
+	if count != 10 {
 		panic("Cover all token types")
 	}
 
 	switch t {
 	case EOF: return "end of file"
-
-	case Comma: return ","
-	case Colon: return ":"
 
 	case Word:  return "word"
 	case Label: return "label declaration"
@@ -52,7 +45,6 @@ func (t Type) String() string {
 	case Oct:   return "octal integer"
 	case Float: return "float"
 
-	case Reg:      return "register"
 	case LabelRef: return "label reference"
 
 	case Error: return "error"
@@ -72,9 +64,6 @@ func (t Token) String() string {
 	switch t.Type {
 	case EOF: return "'end of file'"
 
-	case Comma: return "','"
-	case Colon: return "':'"
-
 	default: return fmt.Sprintf("'%v' of type '%v'", t.Data, t.Type)
 	}
 }
@@ -89,8 +78,7 @@ func NewError(where Where, format string, args... interface{}) Token {
 
 func (t Token) IsArg() bool {
 	switch t.Type {
-	case Dec, Hex, Oct, Float,
-	     Reg, LabelRef: return true
+	case Dec, Hex, Oct, Float, LabelRef: return true
 
 	default: return false
 	}

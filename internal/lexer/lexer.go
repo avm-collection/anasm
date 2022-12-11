@@ -63,16 +63,7 @@ func (l *Lexer) NextToken() (tok token.Token) {
 			continue
 
 		case '@': tok = l.lexLabelRef()
-		case '&': tok = l.lexReg()
 		case '.': tok = l.lexLabel()
-
-		case ':':
-			tok = token.Token{Type: token.Colon, Data: ":"}
-			l.next()
-
-		case ',':
-			tok = token.Token{Type: token.Comma, Data: ","}
-			l.next()
 
 		case '-': tok = l.lexNum()
 
@@ -190,15 +181,6 @@ func (l *Lexer) lexLabel() token.Token {
 	}
 
 	return token.Token{Type: token.Label, Data: l.readWord()}
-}
-
-func (l *Lexer) lexReg() token.Token {
-	if l.next(); !isWordCh(l.ch) {
-		return token.NewError(l.where, "Unexpected character '%v' in register name",
-		                      string(l.ch))
-	}
-
-	return token.Token{Type: token.Reg, Data: l.readWord()}
 }
 
 func (l *Lexer) lexLabelRef() token.Token {

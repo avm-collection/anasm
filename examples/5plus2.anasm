@@ -1,7 +1,6 @@
-.entry          # program entry point
-	psh: 5      # push 5 to the stack
-	psh: 2      # push 2 to the stack
-	add         # add them together
-	por: &ex    # move the result into the exitcode register
+.entry          # Program entry point
+	psh 5       # Push 5 to the stack
+	psh 2       # Push 2 to the stack
+	add         # Add together the top two elements and put the result on the stack
 
-	hlt         # halt the program
+	hlt         # Halt the program using the top element as the exitcode

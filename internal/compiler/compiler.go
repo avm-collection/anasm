@@ -15,66 +15,22 @@ import (
 type Word uint64
 
 const (
-	VersionMajor = 0
-	VersionMinor = 4
+	VersionMajor = 1
+	VersionMinor = 5
 	VersionPatch // Not keeping track of the patch
 )
 
-type argType int
-const (
-	argNone = iota
-	argNum
-	argReg
-)
-
-func (t argType) String() string {
-	switch t {
-	case argNone: return "none"
-	case argNum:  return "number"
-	case argReg:  return "register"
-	}
-
-	panic("Unknown argType")
-}
-
-func tokTypeToArgType(tokType token.Type) argType {
-	switch tokType {
-	case token.Hex,   token.Dec, token.Oct,
-	     token.Float, token.LabelRef: return argNum
-	case token.Reg:                   return argReg
-
-	default: return argNone
-	}
-}
-
-func isTokTypeOfArgType(tokType token.Type, argType argType) bool {
-	switch argType {
-	case argNum: return tokType == token.Hex   || tokType == token.Dec || tokType == token.Oct ||
-	                    tokType == token.Float || tokType == token.LabelRef
-	case argReg: return tokType == token.Reg
-	}
-
-	return false
-}
-
 type Inst struct {
-	Op   byte
-	Args []argType
-
-	FirstArgIsData bool
+	Op     byte
+	HasArg bool
 }
 
 var (
 	insts = map[string]Inst{
 		"nop": Inst{Op: 0x00},
 
-		"mov": Inst{Op: 0x10, Args: []argType{argReg, argNum}},
-		"mor": Inst{Op: 0x11, Args: []argType{argReg, argReg}},
-
-		"psh": Inst{Op: 0x12, Args: []argType{argNum}, FirstArgIsData: true},
-		"psr": Inst{Op: 0x13, Args: []argType{argReg}},
-		"pop": Inst{Op: 0x14},
-		"por": Inst{Op: 0x15, Args: []argType{argReg}},
+		"psh": Inst{Op: 0x10, HasArg: true},
+		"pop": Inst{Op: 0x11},
 
 		"add": Inst{Op: 0x20},
 		"sub": Inst{Op: 0x21},
@@ -95,10 +51,10 @@ var (
 		"fin": Inst{Op: 0x2b},
 		"fde": Inst{Op: 0x2c},
 
-		"jmp": Inst{Op: 0x30, Args: []argType{argNum}, FirstArgIsData: true},
-		"jnz": Inst{Op: 0x31, Args: []argType{argNum}, FirstArgIsData: true},
+		"jmp": Inst{Op: 0x30, HasArg: true},
+		"jnz": Inst{Op: 0x31, HasArg: true},
 
-		"cal": Inst{Op: 0x38, Args: []argType{argNum}, FirstArgIsData: true},
+		"cal": Inst{Op: 0x38, HasArg: true},
 		"ret": Inst{Op: 0x39},
 
 		"equ": Inst{Op: 0x32},
@@ -122,8 +78,8 @@ var (
 		"fle": Inst{Op: 0x44},
 		"flq": Inst{Op: 0x45},
 
-		"dup": Inst{Op: 0x50},
-		"swp": Inst{Op: 0x51},
+		"dup": Inst{Op: 0x50, HasArg: true},
+		"swp": Inst{Op: 0x51, HasArg: true},
 		"emp": Inst{Op: 0x52},
 
 		"dmp": Inst{Op: 0xF0},
@@ -131,30 +87,6 @@ var (
 		"fpr": Inst{Op: 0xF2},
 
 		"hlt": Inst{Op: 0xFF},
-	}
-
-	regs = map[string]byte{
-		"r1":  0x00,
-		"r2":  0x01,
-		"r3":  0x02,
-		"r4":  0x03,
-		"r5":  0x04,
-		"r6":  0x05,
-		"r7":  0x06,
-		"r8":  0x07,
-		"r9":  0x08,
-		"r10": 0x09,
-		"r11": 0x0a,
-		"r12": 0x0b,
-		"r13": 0x0c,
-		"r14": 0x0d,
-		"r15": 0x0e,
-		"r16": 0x0f,
-
-		"ip": 0x10,
-		"sp": 0x11,
-		"sb": 0x12,
-		"ex": 0x13,
 	}
 )
 
@@ -249,9 +181,8 @@ func (c *Compiler) compile() error {
 	return nil
 }
 
-func (c *Compiler) writeInst(op byte, reg byte, data Word) {
+func (c *Compiler) writeInst(op byte, data Word) {
 	binary.Write(&c.out, binary.BigEndian, op)
-	binary.Write(&c.out, binary.BigEndian, reg)
 	binary.Write(&c.out, binary.BigEndian, data)
 }
 
@@ -264,72 +195,31 @@ func (c *Compiler) compileInst() error {
 	}
 
 	c.next()
-	args, err := c.getInstArgs()
+	if !c.tok.IsArg() {
+		if inst.HasArg {
+			return c.ErrorFrom(tok.Where, "Instruction '%v' expects an argument", tok.Data)
+		}
+
+		c.writeInst(inst.Op, 0)
+
+		return nil
+	} else if !inst.HasArg {
+		return c.ErrorFrom(tok.Where, "Instruction '%v' expects no arguments", tok.Data)
+	}
+
+	if !c.tok.IsArg() {
+		return c.ErrorFrom(c.tok.Where, "Expected argument, got '%v'", c.tok.Type)
+	}
+
+	data, err := c.argToWord(c.tok)
 	if err != nil {
 		return err
 	}
-
-	if len(args) != len(inst.Args) {
-		return c.ErrorFrom(tok.Where, "Instruction '%v' expected %v argument(s), got %v",
-		                   tok.Data, len(inst.Args), len(args))
-	}
-
-	for i := 0; i < len(args); i ++ {
-		if !isTokTypeOfArgType(args[i].Type, inst.Args[i]) {
-			return c.ErrorFrom(args[i].Where, "Argument expected to be '%v', got '%v'",
-			                   inst.Args[i], tokTypeToArgType(args[i].Type))
-		}
-	}
-
-	var reg, data Word
-
-	if len(args) > 0 {
-		reg, err = c.argToWord(args[0])
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(args) > 1 {
-		data, err = c.argToWord(args[0])
-		if err != nil {
-			return err
-		}
-	}
-
-	if inst.FirstArgIsData {
-		data = reg
-		reg  = 0
-	}
-
-	c.writeInst(inst.Op, byte(reg), data)
-
-	return nil
-}
-
-func (c *Compiler) getInstArgs() ([]token.Token, error) {
-	args := []token.Token{}
-
-	if c.tok.Type != token.Colon {
-		return args, nil
-	}
 	c.next()
 
-	for {
-		if !c.tok.IsArg() {
-			return args, c.Error("Expected instruction argument, got %v", c.tok)
-		}
+	c.writeInst(inst.Op, data)
 
-		args = append(args, c.tok)
-
-		if c.next(); c.tok.Type != token.Comma {
-			break
-		}
-
-		c.next()
-	}
-
-	return args, nil
+	return nil
 }
 
 func (c *Compiler) argToWord(tok token.Token) (Word, error) {
@@ -370,15 +260,6 @@ func (c *Compiler) argToWord(tok token.Token) (Word, error) {
 		i64, ok := c.labels[tok.Data]
 		if !ok {
 			return 0, c.Error("Label '%v' was not declared", tok.Data)
-		}
-
-		return Word(i64), nil
-
-
-	case token.Reg:
-		i64, ok := regs[tok.Data]
-		if !ok {
-			return 0, c.Error("'%v' is not a valid register", tok.Data)
 		}
 
 		return Word(i64), nil
