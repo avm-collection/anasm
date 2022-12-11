@@ -23,6 +23,7 @@ import (
 // 1.7.1: Remove colons, make the default output path be the basename of the input without the
 //        extension. If there was no extension, add '.out'
 // 1.8.1: Add a disassembler
+// 1.8.2: Support avm 1.6 (Just an internal avm update)
 
 var (
 	out = flag.String("o",         "",      "Path of the output binary")

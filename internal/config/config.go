@@ -6,7 +6,7 @@ const (
 
 	VersionMajor = 1
 	VersionMinor = 8
-	VersionPatch = 1
+	VersionPatch = 2
 
 	AsciiLogo = ` __________________
 |  ______________  |
