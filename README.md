@@ -30,9 +30,12 @@ An assembler for the [avm virtual machine](https://github.com/avm-collection/avm
 ```sh
 $ make
 $ make install
-$ anasm ./examples/fib.anasm -o ./fib
+$ anasm ./examples/fib.anasm
+$ anasm -d ./fib
 $ ./fib
 ```
+`anasm ./examples/fib.anasm` compiles the fibonacci sequence example into an avm binary `./fib`,
+`anasm -d ./fib` diassembles the binary and generates an anasm file `./fib.anasm`
 
 See [the `examples` folder](./examples) for example programs
 

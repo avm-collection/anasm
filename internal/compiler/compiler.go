@@ -26,7 +26,7 @@ type Inst struct {
 }
 
 var (
-	insts = map[string]Inst{
+	Insts = map[string]Inst{
 		"nop": Inst{Op: 0x00},
 
 		"psh": Inst{Op: 0x10, HasArg: true},
@@ -189,7 +189,7 @@ func (c *Compiler) writeInst(op byte, data Word) {
 func (c *Compiler) compileInst() error {
 	tok := c.tok
 
-	inst, ok := insts[tok.Data]
+	inst, ok := Insts[tok.Data]
 	if !ok {
 		return c.Error("'%v' is not an instruction", tok.Data)
 	}
@@ -287,7 +287,7 @@ func (c *Compiler) preproc() error {
 		// Eat and evaluate the preprocessor, leave out the other tokens
 		switch tok.Type {
 		case token.Word:
-			if _, ok := insts[tok.Data]; ok {
+			if _, ok := Insts[tok.Data]; ok {
 				c.pos ++
 			}
 
