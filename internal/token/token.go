@@ -29,11 +29,13 @@ const (
 	count // Count of all token types
 )
 
-func (t Type) String() string {
-	if count != 10 {
+func AllTokensCoveredTest() {
+	if count != 9 {
 		panic("Cover all token types")
 	}
+}
 
+func (t Type) String() string {
 	switch t {
 	case EOF: return "end of file"
 

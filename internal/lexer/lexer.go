@@ -13,6 +13,8 @@ type Lexer struct {
 }
 
 func New(input, path string) *Lexer {
+	token.AllTokensCoveredTest()
+
 	l := &Lexer{input: input, pos: -1}
 	l.next()
 
