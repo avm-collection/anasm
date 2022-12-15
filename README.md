@@ -1,17 +1,17 @@
 <p align="center">
-	<img width="280px" src="res/logo.png">
+	<img width="250px" src="res/logo.png">
 </p>
 <p align="center">An assembler for avm</p>
-	
+
 <p align="center">
 	<a href="./LICENSE">
 		<img alt="License" src="https://img.shields.io/badge/license-GPL-blue?color=26d374"/>
 	</a>
-	<a href="https://github.com/avm-collection/avm/issues">
-		<img alt="Issues" src="https://img.shields.io/github/issues/avm-collection/avm?color=4f79e4"/>
+	<a href="https://github.com/avm-collection/anasm/issues">
+		<img alt="Issues" src="https://img.shields.io/github/issues/avm-collection/anasm?color=4f79e4"/>
 	</a>
-	<a href="https://github.com/avm-collection/avm/pulls">
-		<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/avm-collection/avm?color=4f79e4"/>
+	<a href="https://github.com/avm-collection/anasm/pulls">
+		<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/avm-collection/anasm?color=4f79e4"/>
 	</a>
 </p>
 
