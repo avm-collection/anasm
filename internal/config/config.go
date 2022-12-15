@@ -7,15 +7,4 @@ const (
 	VersionMajor = 1
 	VersionMinor = 8
 	VersionPatch = 2
-
-	AsciiLogo = ` __________________
-|  ______________  |
-| |              | |
-| |  .entry      | |
-| |      anasm   | |
-| |      hlt     | |
-| |______________| |
-|__________________|
-       ______
-      |______|      `
 )

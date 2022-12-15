@@ -44,8 +44,6 @@ func printTry(arg string) {
 }
 
 func usage() {
-	fmt.Printf("%v v%v.%v.%v\n\n", config.AsciiLogo,
-	           config.VersionMajor, config.VersionMinor, config.VersionPatch)
 	fmt.Printf("Github: %v\n", config.GithubLink)
 	fmt.Printf("Usage: %v [FILE] [OPTIONS]\n", os.Args[0])
 	fmt.Println("Options:")
