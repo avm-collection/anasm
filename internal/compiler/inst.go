@@ -31,6 +31,9 @@ var (
 		"fin": Inst{Op: 0x2b},
 		"fde": Inst{Op: 0x2c},
 
+		"neg": Inst{Op: 0x2d},
+		"not": Inst{Op: 0x2e},
+
 		"jmp": Inst{Op: 0x30, HasArg: true},
 		"jnz": Inst{Op: 0x31, HasArg: true},
 
