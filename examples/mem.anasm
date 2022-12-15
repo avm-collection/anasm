@@ -1,0 +1,8 @@
+.entry
+	psh 0        # Addr
+	psh 1024     # Value
+	w64          # Write 64 bits to memory
+
+	psh 0
+	r64          # Read the 64 bits back from memory
+	prt          # Print them

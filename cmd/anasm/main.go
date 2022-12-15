@@ -24,6 +24,7 @@ import (
 //        extension. If there was no extension, add '.out'
 // 1.8.1: Add a disassembler
 // 1.8.2: Support avm 1.6 (Just an internal avm update)
+// 1.9.2: Support avm 1.8
 
 var (
 	out = flag.String("o",         "",      "Path of the output binary")
