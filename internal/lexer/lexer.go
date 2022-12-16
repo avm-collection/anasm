@@ -12,6 +12,14 @@ type Lexer struct {
 	where token.Where
 }
 
+var Keywords = map[string]token.Type{
+	"let":  token.Let,
+	"sz8":  token.Size8,
+	"sz16": token.Size16,
+	"sz32": token.Size32,
+	"sz64": token.Size64,
+}
+
 func New(input, path string) *Lexer {
 	token.AllTokensCoveredTest()
 
@@ -71,10 +79,13 @@ func (l *Lexer) NextToken() (tok token.Token) {
 		case '"':  tok = l.lexString()
 		case '\'': tok = l.lexChar()
 
-		case '@': tok = l.lexLabelRef()
+		case '@': tok = l.lexAddr()
 		case '.': tok = l.lexLabel()
 
 		case '-': tok = l.lexNum()
+		case ',':
+			tok = token.Token{Type: token.Comma, Data: string(l.ch)}
+			l.next()
 
 		default:
 			if isDecDigit(l.ch) {
@@ -121,7 +132,7 @@ func (l *Lexer) lexString() token.Token {
 	str    := ""
 	escape := false
 
-	for l.next(); true; l.next() {
+	for l.next(); l.ch != '"' && !escape; l.next() {
 		switch l.ch {
 		case '\\':
 			if escape {
@@ -131,17 +142,8 @@ func (l *Lexer) lexString() token.Token {
 				escape = true
 			}
 
-		case '"':
-			if escape {
-				escape = false
-				str   += "\""
-			} else {
-				break
-			}
-
-
-		case '\n': return token.NewError(l.where, "Expected '\"', got new line")
-		case EOF:  return token.NewError(l.where, "Expected '\"', got end of file")
+		case '\n': return token.NewError(l.where, "Expected '\"', got 'new line'")
+		case EOF:  return token.NewError(l.where, "Expected '\"', got 'end of file'")
 
 		default:
 			if escape {
@@ -302,17 +304,23 @@ func (l *Lexer) lexLabel() token.Token {
 	return token.Token{Type: token.Label, Data: l.readWord()}
 }
 
-func (l *Lexer) lexLabelRef() token.Token {
+func (l *Lexer) lexAddr() token.Token {
 	if l.next(); !isWordCh(l.ch) {
-		return token.NewError(l.where, "Unexpected character '%v' in label name",
+		return token.NewError(l.where, "Unexpected character '%v' in address name",
 		                      string(l.ch))
 	}
 
-	return token.Token{Type: token.LabelRef, Data: l.readWord()}
+	return token.Token{Type: token.Addr, Data: l.readWord()}
 }
 
 func (l *Lexer) lexWord() token.Token {
-	return token.Token{Type: token.Word, Data: l.readWord()}
+	str := l.readWord()
+	type_, ok := Keywords[str]
+	if ok {
+		return token.Token{Type: type_, Data: str}
+	}
+
+	return token.Token{Type: token.Word, Data: str}
 }
 
 func (l *Lexer) readWord() (str string) {

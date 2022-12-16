@@ -17,6 +17,7 @@ const (
 
 	Word
 	Label
+	Comma
 
 	Dec
 	Hex
@@ -26,14 +27,20 @@ const (
 	Float
 	String
 
-	LabelRef // Label reference, for example 'jmp @label'
+	Addr // Variables, label references, for example 'jmp @label'
+
+	Let
+	Size8
+	Size16
+	Size32
+	Size64
 
 	Error
 	count // Count of all token types
 )
 
 func AllTokensCoveredTest() {
-	if count != 12 {
+	if count != 18 {
 		panic("Cover all token types")
 	}
 }
@@ -44,6 +51,7 @@ func (t Type) String() string {
 
 	case Word:  return "word"
 	case Label: return "label declaration"
+	case Comma: return ","
 
 	case Dec:    return "decimal integer"
 	case Hex:    return "hexadecimal integer"
@@ -53,7 +61,13 @@ func (t Type) String() string {
 	case Float:  return "float"
 	case String: return "string"
 
-	case LabelRef: return "label reference"
+	case Addr: return "address"
+
+	case Let:    return "let"
+	case Size8:  return "sz8"
+	case Size16: return "sz16"
+	case Size32: return "sz32"
+	case Size64: return "sz64"
 
 	case Error: return "error"
 
@@ -68,11 +82,13 @@ type Token struct {
 	Where Where
 }
 
-func (t Token) String() string {
-	switch t.Type {
+func (tok Token) String() string {
+	switch tok.Type {
 	case EOF: return "'end of file'"
+	case Size8, Size16, Size32, Size64,
+	     Comma, Let: return "'" + tok.Type.String() +  "'"
 
-	default: return fmt.Sprintf("'%v' of type '%v'", t.Data, t.Type)
+	default: return fmt.Sprintf("'%v' of type '%v'", tok.Data, tok.Type)
 	}
 }
 
@@ -86,7 +102,7 @@ func NewError(where Where, format string, args... interface{}) Token {
 
 func (t Token) IsArg() bool {
 	switch t.Type {
-	case Dec, Hex, Oct, Bin, Char, Float, LabelRef: return true
+	case Dec, Hex, Oct, Bin, Char, Float, Addr: return true
 
 	default: return false
 	}

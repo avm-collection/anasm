@@ -1,0 +1,27 @@
+let num1 sz64 1024          # Declare variable num1 with element size 64 bits and value 1024
+let num2 sz64 123456789
+let abc  sz8  "abc"         # Variable abc with element size 8 bits and value "abc" (97, 98, 99)
+                            # (the size of this variable is 3 bytes)
+
+.entry
+	psh @num1
+	r64
+	prt
+
+	psh @num2
+	r64
+	prt
+
+	psh @abc         # Print first element of abc
+	dup 0            # Duplicate the address for printing the next element
+	r08
+	prt
+
+	inc              # Get to the next element
+	dup 0            # Duplicate the address for printing the last element
+	r08
+	prt
+
+	inc              # Get to the last element
+	r08
+	prt
