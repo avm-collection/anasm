@@ -1,0 +1,35 @@
+filetype: anasm
+detect:
+    filename: "\\.anasm$"
+
+rules:
+    - preproc:   "\\.\\b([0-9a-zA-Z]+)\\b"
+    - statement: "\\b(let|nop|psh|pop|add|sub|mul|div|mod|inc|dec|fad|fsb|fmu|fdi|fin|fde|neg)\\b"
+    - statement: "\\b(not|jmp|jnz|cal|ret|equ|neq|grt|geq|les|leq|ueq|une|ugr|ugq|ule|ulq|feq)\\b"
+    - statement: "\\b(fne|fgr|fgq|fle|flq|dup|swp|emp|set|cpy|r08|r16|r32|r64|w08|w16|w32|w64)\\b"
+    - statement: "\\b(dmp|prt|fpr|hlt)\\b"
+    - constant.string:
+        start: "\""
+        end:   "\""
+        rules:
+            - constant.specialChar: "\\\\[0abefnrtv\\\"\\\\]"
+
+    - constant.string:
+        start: "'"
+        end:   "'"
+        rules:
+            - error: "..+"
+            - constant.specialChar: "\\\\[0abefnrtv\\\"\\\\]"
+
+    - constant.number: "\\b(0[x|X][0-9A-Fa-f]+)\\b"
+    - constant.number: "\\b(0[o|O][0-7]+)\\b"
+    - constant.number: "\\b(0[b|B][0-7]+)\\b"
+    - constant.number: "\\b([0-9]+)\\b"
+
+    - symbol.operator: "[@]"
+
+    - comment:
+        start: "#"
+        end:   "$"
+        rules:
+            - todo: "(TODO|XXX|FIXME|READABLE):?"

@@ -38,6 +38,10 @@ func isOctDigit(ch byte) bool {
 	return ch >= '0' && ch <= '7'
 }
 
+func isBinDigit(ch byte) bool {
+	return ch == '0' || ch == '1'
+}
+
 func isHexDigit(ch byte) bool {
 	return (ch >= '0' && ch <= '9') ||
 	       (ch >= 'a' && ch <= 'f') ||
@@ -63,6 +67,9 @@ func (l *Lexer) NextToken() (tok token.Token) {
 			l.skipComment()
 
 			continue
+
+		case '"':  tok = l.lexString()
+		case '\'': tok = l.lexChar()
 
 		case '@': tok = l.lexLabelRef()
 		case '.': tok = l.lexLabel()
@@ -91,6 +98,94 @@ func (l *Lexer) NextToken() (tok token.Token) {
 	return
 }
 
+func escapedCharToByte(ch byte) (byte, bool) {
+	switch ch {
+	case '0':  return 0,    true
+	case 'a':  return '\a', true
+	case 'b':  return '\b', true
+	case 'e':  return 27,   true
+	case 'f':  return '\f', true
+	case 'n':  return '\n', true
+	case 'r':  return '\r', true
+	case 't':  return '\t', true
+	case 'v':  return '\v', true
+	case '\\': return '\\', true
+	case '"':  return '"',  true
+	case '\'': return '\'', true
+	}
+
+	return 0, false
+}
+
+func (l *Lexer) lexString() token.Token {
+	str    := ""
+	escape := false
+
+	for l.next(); true; l.next() {
+		switch l.ch {
+		case '\\':
+			if escape {
+				escape = false
+				str   += "\\"
+			} else {
+				escape = true
+			}
+
+		case '"':
+			if escape {
+				escape = false
+				str   += "\""
+			} else {
+				break
+			}
+
+
+		case '\n': return token.NewError(l.where, "Expected '\"', got new line")
+		case EOF:  return token.NewError(l.where, "Expected '\"', got end of file")
+
+		default:
+			if escape {
+				ret, ok := escapedCharToByte(l.ch)
+				if !ok {
+					return token.NewError(l.where, "Unknown escape sequence '\\%v'", string(l.ch))
+				}
+
+				str += string(ret)
+			} else {
+				str += string(l.ch)
+			}
+		}
+	}
+
+	l.next()
+
+	return token.Token{Type: token.String, Data: str}
+}
+
+func (l *Lexer) lexChar() token.Token {
+	str := ""
+
+	if l.next(); l.ch == '\\' {
+		l.next()
+		ret, ok := escapedCharToByte(l.ch)
+		if !ok {
+			return token.NewError(l.where, "Unknown escape sequence '\\%v'", string(l.ch))
+		}
+
+		str += string(ret)
+	} else {
+		str += string(l.ch)
+	}
+
+	if l.next(); l.ch != '\'' {
+		return token.NewError(l.where, "Character literal expected to be exactly 1 byte long")
+	}
+
+	l.next()
+
+	return token.Token{Type: token.Char, Data: str}
+}
+
 func (l *Lexer) lexNum() token.Token {
 	if l.ch == '0' && (l.peek() == 'x' || l.peek() == 'X') {
 		l.next()
@@ -102,6 +197,11 @@ func (l *Lexer) lexNum() token.Token {
 		l.next()
 
 		return l.lexOct()
+	} else if l.ch == '0' && (l.peek() == 'b' || l.peek() == 'B') {
+		l.next()
+		l.next()
+
+		return l.lexBin()
 	} else {
 		return l.lexDec()
 	}
@@ -128,7 +228,7 @@ func (l *Lexer) lexOct() token.Token {
 	str := ""
 
 	for !isWhitespace(l.ch) && l.ch != ',' && l.ch != ':' {
-		if !isHexDigit(l.ch) {
+		if !isOctDigit(l.ch) {
 			return token.NewError(l.where, "Unexpected character '%v' in octal number",
 			                      string(l.ch))
 		}
@@ -139,6 +239,23 @@ func (l *Lexer) lexOct() token.Token {
 	}
 
 	return token.Token{Type: token.Oct, Data: str}
+}
+
+func (l *Lexer) lexBin() token.Token {
+	str := ""
+
+	for !isWhitespace(l.ch) && l.ch != ',' && l.ch != ':' {
+		if !isBinDigit(l.ch) {
+			return token.NewError(l.where, "Unexpected character '%v' in octal number",
+			                      string(l.ch))
+		}
+
+		str += string(l.ch)
+
+		l.next()
+	}
+
+	return token.Token{Type: token.Bin, Data: str}
 }
 
 func (l *Lexer) lexDec() token.Token {

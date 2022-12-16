@@ -1,0 +1,15 @@
+.entry
+	psh 0x64
+	prt
+
+	psh 0o64
+	prt
+
+	psh 0b110
+	prt
+
+	psh 'a'
+	prt
+
+	psh '\e'
+	prt

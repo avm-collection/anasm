@@ -26,6 +26,8 @@ import (
 // 1.8.2:  Support avm 1.6 (Just an internal avm update)
 // 1.9.2:  Support avm 1.9
 // 1.10.2: Support avm 1.10
+// 1.10.3: Fix octal integer lexing
+// 1.11.3: Add binary integer and character literals support, prepare string support
 
 var (
 	out = flag.String("o",         "",      "Path of the output binary")

@@ -178,6 +178,21 @@ func (c *Compiler) argToWord(tok token.Token) (Word, error) {
 
 		return Word(i64), nil
 
+	case token.Bin:
+		i64, err := strconv.ParseInt(tok.Data, 2, 64)
+		if err != nil {
+			panic(err) // This should never happen
+		}
+
+		return Word(i64), nil
+
+	case token.Char:
+		if len(tok.Data) > 1 {
+			panic("len(tok.Data) > 1") // This should never happen
+		}
+
+		return Word(tok.Data[0]), nil
+
 	case token.Float:
 		i64, err := strconv.ParseFloat(tok.Data, 8)
 		if err != nil {

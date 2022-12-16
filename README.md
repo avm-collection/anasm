@@ -31,7 +31,7 @@ $ make install
 $ anasm ./examples/fib.anasm
 $ ./fib
 ```
-`anasm ./examples/fib.anasm` compiles the fibonacci sequence example into an avm binary `./fib`
+`anasm ./examples/fib.anasm` compiles the fibonacci sequence example into an avm binary `./fib`.
 
 See [the `./examples` folder](./examples) for example programs
 

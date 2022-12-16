@@ -21,7 +21,10 @@ const (
 	Dec
 	Hex
 	Oct
+	Bin
+	Char
 	Float
+	String
 
 	LabelRef // Label reference, for example 'jmp @label'
 
@@ -30,7 +33,7 @@ const (
 )
 
 func AllTokensCoveredTest() {
-	if count != 9 {
+	if count != 12 {
 		panic("Cover all token types")
 	}
 }
@@ -42,10 +45,13 @@ func (t Type) String() string {
 	case Word:  return "word"
 	case Label: return "label declaration"
 
-	case Dec:   return "decimal integer"
-	case Hex:   return "hexadecimal integer"
-	case Oct:   return "octal integer"
-	case Float: return "float"
+	case Dec:    return "decimal integer"
+	case Hex:    return "hexadecimal integer"
+	case Oct:    return "octal integer"
+	case Bin:    return "binary integer"
+	case Char:   return "character"
+	case Float:  return "float"
+	case String: return "string"
 
 	case LabelRef: return "label reference"
 
@@ -80,7 +86,7 @@ func NewError(where Where, format string, args... interface{}) Token {
 
 func (t Token) IsArg() bool {
 	switch t.Type {
-	case Dec, Hex, Oct, Float, LabelRef: return true
+	case Dec, Hex, Oct, Bin, Char, Float, LabelRef: return true
 
 	default: return false
 	}
