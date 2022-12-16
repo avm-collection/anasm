@@ -12,23 +12,23 @@ import (
 	"github.com/avm-collection/anasm/internal/disasm"
 )
 
-// 0.1.0:  Support avm version 0.2
-// 0.2.0:  Added instruction argument safety
-// 0.3.0:  Added an option to create an executable output file
-// 0.4.0:  Support avm 0.3
-// 0.4.1:  Parameter improvements, flags can now come after parameters
-// 0.5.1:  Add octal and float instruction arguments
-// 0.6.1:  Support avm 0.4
-// 1.6.1:  Support avm 1.5 - remove registers, commas, improved dup and swap instructions
-// 1.7.1:  Remove colons, make the default output path be the basename of the input without the
-//         extension. If there was no extension, add '.out'
-// 1.8.1:  Add a disassembler
-// 1.8.2:  Support avm 1.6 (Just an internal avm update)
-// 1.9.2:  Support avm 1.9
-// 1.10.2: Support avm 1.10
-// 1.10.3: Fix octal integer lexing
-// 1.11.3: Add binary integer and character literals support, prepare string support
-// 1.12.3: Support avm 1.11, add strings
+// 0.1.0: Support avm version 0.2
+// 0.2.0: Added instruction argument safety
+// 0.3.0: Added an option to create an executable output file
+// 0.4.0: Support avm 0.3
+// 0.4.1: Parameter improvements, flags can now come after parameters
+// 0.5.1: Add octal and float instruction arguments
+// 0.6.1: Support avm 0.4
+// 1.0.0: Support avm 1.1 - remove registers, commas, improved dup and swap instructions
+// 1.1.0: Remove colons, make the default output path be the basename of the input without the
+//        extension. If there was no extension, add '.out'
+// 1.2.0: Add a disassembler
+// 1.2.1: Support avm 1.2 (Just an internal avm update)
+// 1.3.1: Support avm 1.5
+// 1.4.1: Support avm 1.6
+// 1.4.2: Fix octal integer lexing
+// 1.5.2: Add binary integer and character literals support, prepare string support
+// 1.6.2: Support avm 1.7, add strings
 
 var (
 	out = flag.String("o",         "",      "Path of the output binary")
