@@ -23,3 +23,4 @@
 - `1.4.2`: Fix octal integer lexing
 - `1.5.2`: Add binary integer and character literals support, prepare string support
 - `1.6.2`: Support avm 1.7, add strings
+- `1.7.2`: Support avm 1.8 (no changes to the assembler)

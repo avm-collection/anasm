@@ -1,16 +1,16 @@
 .entry
-	psh 0        # Addr
+	psh 1        # Addr
 	psh 1024     # Value
 	w64          # Write 64 bits to memory
 
-	psh 0
+	psh 1
 	r64          # Read the 64 bits back from memory
 	prt          # Print them
 
-	psh 0
+	psh 1
 	psh 128
 	w08
 
-	psh 0
+	psh 1
 	r08
 	prt
