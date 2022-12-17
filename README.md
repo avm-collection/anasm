@@ -43,7 +43,7 @@ See [the `./examples` folder](./examples) for example programs
 - [ ] Macros
 
 ## Documentation
-Coming soon.
+Hosted [here](https://avm-collection.github.io/anasm)
 
 ## Bugs
 If you find any bugs, please create an issue and report them.
