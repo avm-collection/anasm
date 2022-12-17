@@ -1,8 +1,8 @@
-# anasm changelog
-* [anasm 0](#anasm-0)
-* [anasm 1](#anasm-1)
+# ANASM changelog
+* [ANASM 0](#anasm-0)
+* [ANASM 1](#anasm-1)
 
-## anasm 0
+## ANASM 0
 - `0.1.0`: Support avm version 0.2
 - `0.2.0`: Added instruction argument safety
 - `0.3.0`: Added an option to create an executable output file
@@ -11,7 +11,7 @@
 - `0.5.1`: Add octal and float instruction arguments
 - `0.6.1`: Support avm 0.4
 
-## anasm 1
+## ANASM 1
 - `1.0.0`: Support avm 1.1 - remove registers, commas, improved dup and swap instructions - syntax
            is stabilized
 - `1.1.0`: Remove colons, make the default output path be the basename of the input without the

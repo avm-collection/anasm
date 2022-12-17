@@ -15,7 +15,7 @@
 	</a>
 </p>
 
-An assembler for the [avm virtual machine](https://github.com/avm-collection/avm) written in Go
+An assembler for the [AVM virtual machine](https://github.com/avm-collection/avm) written in Go
 
 ## Table of contents
 * [Quickstart](#quickstart)
@@ -31,7 +31,7 @@ $ make install
 $ anasm ./examples/fib.anasm
 $ ./fib
 ```
-`anasm ./examples/fib.anasm` compiles the fibonacci sequence example into an avm binary `./fib`.
+`anasm ./examples/fib.anasm` compiles the fibonacci sequence example into an AVM binary `./fib`.
 
 See [the `./examples` folder](./examples) for example programs
 
