@@ -3,12 +3,12 @@ detect:
     filename: "\\.anasm$"
 
 rules:
-    - preproc:   "\\.\\b([0-9a-zA-Z]+)\\b"
+    - preproc:   "\\.\\b([0-9a-zA-Z_]+)\\b"
     - special:   "\\b(sz8|sz16|sz32|sz64)\\b"
     - statement: "\\b(let|nop|psh|pop|add|sub|mul|div|mod|inc|dec|fad|fsb|fmu|fdi|fin|fde|neg)\\b"
     - statement: "\\b(not|jmp|jnz|cal|ret|equ|neq|grt|geq|les|leq|ueq|une|ugr|ugq|ule|ulq|feq)\\b"
     - statement: "\\b(fne|fgr|fgq|fle|flq|dup|swp|emp|set|cpy|r08|r16|r32|r64|w08|w16|w32|w64)\\b"
-    - statement: "\\b(dmp|prt|fpr|hlt)\\b"
+    - statement: "\\b(dmp|prt|fpr|hlt|ope|clo|wrf|rdf)\\b"
     - constant.string:
         start: "\""
         end:   "\""

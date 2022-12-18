@@ -1,0 +1,70 @@
+let SIZE sz64 5       # Size of file name string
+let NAME sz8  "a.txt" # File name
+
+let FD sz64 0
+
+.get_fd
+	psh @FD
+	r64
+
+	ret
+
+.set_fd
+	psh @FD           # Save the file descriptor into a variable
+	swp 0
+	w64
+
+	ret
+
+.write_hi_to_file
+	cal @get_fd       # Write 'hi' into the file
+	psh 'i'
+	dup 1
+	psh 'h'
+
+	wrf
+	wrf
+
+	ret
+
+.write_file_example
+	psh @SIZE         # Push the address of the string
+	psh 0b0010        # Write mode
+	ope               # Open the file (returns a file ID)
+	cal @set_fd
+
+	cal @write_hi_to_file
+
+	cal @get_fd       # Close the file
+	clo
+
+	ret
+
+.read_file_example
+	psh @SIZE         # Push the address of the string
+	psh 0b0001        # Read mode
+	ope               # Open the file (returns a file ID)
+	cal @set_fd
+
+.loop
+	cal @get_fd
+	rdf               # Read a byte from the file
+	dup  0            # Duplicate it for printing
+	prt               # Print it
+
+	psh -1            # EOF
+	neq
+	jnz @loop         # Loop while we didnt reach EOF
+
+	cal @get_fd       # Close the file
+	clo
+
+	ret
+
+.entry
+	# write_file_example writes 'hi' into the file 'a.txt'
+	cal @write_file_example
+
+	# read_file_example reads from the file 'a.txt' and outputs the read
+	# bytes in decimal integers. It also outputs a -1 after, which is the EOF
+	cal @read_file_example

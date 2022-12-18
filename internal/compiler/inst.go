@@ -77,6 +77,11 @@ var (
 		"w32": Inst{Op: 0x66},
 		"w64": Inst{Op: 0x67},
 
+		"ope": Inst{Op: 0x70},
+		"clo": Inst{Op: 0x71},
+		"wrf": Inst{Op: 0x72},
+		"rdf": Inst{Op: 0x73},
+
 		"dmp": Inst{Op: 0xF0},
 		"prt": Inst{Op: 0xF1},
 		"fpr": Inst{Op: 0xF2},

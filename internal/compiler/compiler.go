@@ -155,7 +155,7 @@ func (c *Compiler) compileLet() error {
 		return c.Error("Label '%v' already exists", name)
 	}
 
-	c.vars[name] = c.memorySize
+	c.vars[name] = c.memorySize + 1
 
 	c.next()
 	var size int

@@ -17,10 +17,12 @@
 - `1.1.0`: Remove colons, make the default output path be the basename of the input without the
            extension. If there was no extension, add '.out'
 - `1.2.0`: Add a disassembler
-- `1.2.1`: Support avm 1.2 (Just an internal avm update)
+- `1.2.1`: Support avm 1.2 (just an internal avm update)
 - `1.3.1`: Support avm 1.5
 - `1.4.1`: Support avm 1.6
 - `1.4.2`: Fix octal integer lexing
 - `1.5.2`: Add binary integer and character literals support, prepare string support
 - `1.6.2`: Support avm 1.7, add strings
 - `1.7.2`: Support avm 1.8 (no changes to the assembler)
+- `1.7.3`: Fix variable addresses
+- `1.8.3`: Support avm 1.9 (file IO)
