@@ -20,6 +20,11 @@ const (
 	VersionPatch // Not keeping track of the patch
 )
 
+type Var struct {
+	Addr Word
+	Size Word
+}
+
 type Compiler struct {
 	toks []token.Token
 	pos  Word
@@ -28,7 +33,7 @@ type Compiler struct {
 	programSize, memorySize, entryPoint Word
 
 	labels map[string]Word
-	vars   map[string]Word
+	vars   map[string]Var
 
 	memory  bytes.Buffer
 	program bytes.Buffer
@@ -38,7 +43,7 @@ type Compiler struct {
 
 func New(input, path string) *Compiler {
 	return &Compiler{l: lexer.New(input, path),
-	                 labels: make(map[string]Word), vars: make(map[string]Word)}
+	                 labels: make(map[string]Word), vars: make(map[string]Var)}
 }
 
 func (c *Compiler) Error(format string, args... interface{}) error {
@@ -155,15 +160,16 @@ func (c *Compiler) compileLet() error {
 		return c.Error("Label '%v' already exists", name)
 	}
 
-	c.vars[name] = c.memorySize + 1
+	var size Word
+	addr := c.memorySize + 1
 
 	c.next()
-	var size int
+	var elemSize int
 	switch c.tok.Type {
-	case token.Size8:  size = 1
-	case token.Size16: size = 2
-	case token.Size32: size = 4
-	case token.Size64: size = 8
+	case token.Size8:  elemSize = 1
+	case token.Size16: elemSize = 2
+	case token.Size32: elemSize = 4
+	case token.Size64: elemSize = 8
 
 	default: return c.Error("Expected data element size (sz8/sz16/sz32/sz64), got %v", c.tok)
 	}
@@ -172,26 +178,26 @@ func (c *Compiler) compileLet() error {
 	for {
 		if c.tok.Type == token.String {
 			for _, ch := range c.tok.Data {
-				if err := c.writeMemory(Word(ch), size); err != nil {
+				if err := c.writeMemory(Word(ch), elemSize); err != nil {
 					return err
 				}
 
-				c.memorySize += Word(size)
+				size += Word(elemSize)
 			}
 		} else {
-			if !c.tok.IsArg() {
+			if !c.tok.IsConstExprSimple() {
 				return c.Error("Expected data, got %v", c.tok)
 			}
 
-			data, err := c.argToWord(c.tok)
+			data, err := c.evalConstExpr(c.tok)
 			if err != nil {
 				return err
 			}
 
-			if err := c.writeMemory(data, size); err != nil {
+			if err := c.writeMemory(data, elemSize); err != nil {
 				return err
 			}
-			c.memorySize += Word(size)
+			size += Word(elemSize)
 		}
 
 		c.next()
@@ -200,6 +206,9 @@ func (c *Compiler) compileLet() error {
 		}
 		c.next()
 	}
+
+	c.memorySize += size
+	c.vars[name] = Var{Addr: addr, Size: size}
 
 	return nil
 }
@@ -218,7 +227,7 @@ func (c *Compiler) compileInst() error {
 	}
 
 	c.next()
-	if !c.tok.IsArg() {
+	if !c.tok.IsConstExprSimple() && c.tok.Type != token.LParen {
 		if inst.HasArg {
 			return c.ErrorFrom(tok.Where, "Instruction '%v' expects an argument", tok.Data)
 		}
@@ -230,11 +239,7 @@ func (c *Compiler) compileInst() error {
 		return c.ErrorFrom(tok.Where, "Instruction '%v' expects no arguments", tok.Data)
 	}
 
-	if !c.tok.IsArg() {
-		return c.ErrorFrom(c.tok.Where, "Expected argument, got %v", c.tok)
-	}
-
-	data, err := c.argToWord(c.tok)
+	data, err := c.evalConstExpr(c.tok)
 	if err != nil {
 		return err
 	}
@@ -245,7 +250,7 @@ func (c *Compiler) compileInst() error {
 	return nil
 }
 
-func (c *Compiler) argToWord(tok token.Token) (Word, error) {
+func (c *Compiler) evalConstExpr(tok token.Token) (Word, error) {
 	switch tok.Type {
 	case token.Dec:
 		data, err := strconv.ParseInt(tok.Data, 10, 64)
@@ -297,15 +302,182 @@ func (c *Compiler) argToWord(tok token.Token) (Word, error) {
 	case token.Addr:
 		data, ok := c.labels[tok.Data]
 		if !ok {
-			data, ok = c.vars[tok.Data]
+			data, ok := c.vars[tok.Data]
 			if !ok {
 				return 0, c.Error("Address name '%v' was not declared", tok.Data)
 			}
+
+			return data.Addr, nil
 		}
 
-		return Word(data), nil
+		return data, nil
+
+	case token.LParen:
+		data, err := c.evalParens()
+		if err != nil {
+			return 0, err
+		}
+
+		return data, nil
 
 	default: return 0, c.Error("Expected register argument, instead got %v", tok)
+	}
+}
+
+func (c *Compiler) evalParens() (Word, error) {
+	c.next()
+
+	switch c.tok.Type {
+	case token.SizeOf:
+		c.next()
+		if c.tok.Type != token.Word {
+			return 0, c.Error("Expected a variable name, got %v", c.tok)
+		}
+
+		var_, ok := c.vars[c.tok.Data]
+		if !ok {
+			return 0, c.Error("No variable of name '%v' exists", c.tok.Data)
+		}
+
+		c.next()
+		if c.tok.Type != token.RParen {
+			return 0, c.Error("Expected matching ')', got %v", c.tok)
+		}
+
+		return var_.Size, nil
+
+	case token.Add:
+		var res Word
+		argCount := 0
+
+		c.next()
+		for c.tok.Type != token.RParen {
+			value, err := c.evalConstExpr(c.tok)
+			if err != nil {
+				return 0, err
+			}
+
+			res += value
+
+			argCount ++
+			c.next()
+		}
+
+		if argCount < 2 {
+			return 0, c.Error("Operator '+' expects at least 2 arguments, got %v", argCount)
+		}
+
+		return res, nil
+
+	case token.Sub:
+		var res Word
+		argCount := 0
+
+		c.next()
+		for c.tok.Type != token.RParen {
+			value, err := c.evalConstExpr(c.tok)
+			if err != nil {
+				return 0, err
+			}
+
+			if argCount == 0 {
+				res = value
+			} else {
+				res -= value
+			}
+
+			argCount ++
+			c.next()
+		}
+
+		if argCount < 2 {
+			return 0, c.Error("Operator '-' expects at least 2 arguments, got %v", argCount)
+		}
+
+		return res, nil
+
+	case token.Mult:
+		var res Word
+		argCount := 0
+
+		c.next()
+		for c.tok.Type != token.RParen {
+			value, err := c.evalConstExpr(c.tok)
+			if err != nil {
+				return 0, err
+			}
+
+			if argCount == 0 {
+				res = value
+			} else {
+				res *= value
+			}
+
+			argCount ++
+			c.next()
+		}
+
+		if argCount < 2 {
+			return 0, c.Error("Operator '*' expects at least 2 arguments, got %v", argCount)
+		}
+
+		return res, nil
+
+	case token.Div:
+		var res Word
+		argCount := 0
+
+		c.next()
+		for c.tok.Type != token.RParen {
+			value, err := c.evalConstExpr(c.tok)
+			if err != nil {
+				return 0, err
+			}
+
+			if argCount == 0 {
+				res = value
+			} else {
+				res /= value
+			}
+
+			argCount ++
+			c.next()
+		}
+
+		if argCount < 2 {
+			return 0, c.Error("Operator '/' expects at least 2 arguments, got %v", argCount)
+		}
+
+		return res, nil
+
+	case token.Mod:
+		var res Word
+		argCount := 0
+
+		c.next()
+		for c.tok.Type != token.RParen {
+			value, err := c.evalConstExpr(c.tok)
+			if err != nil {
+				return 0, err
+			}
+
+			if argCount == 0 {
+				res = value
+			} else {
+				res %= value
+			}
+
+			argCount ++
+			c.next()
+		}
+
+		if argCount < 2 {
+			return 0, c.Error("Operator '%%' expects at least 2 arguments, got %v", argCount)
+		}
+
+		return res, nil
+
+	default: return 0, c.Error("Expected operator, got %v", c.tok)
 	}
 }
 

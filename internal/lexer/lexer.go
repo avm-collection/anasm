@@ -18,6 +18,13 @@ var Keywords = map[string]token.Type{
 	"sz16": token.Size16,
 	"sz32": token.Size32,
 	"sz64": token.Size64,
+	"szof": token.SizeOf,
+
+	"+": token.Add,
+	"-": token.Sub,
+	"*": token.Mult,
+	"/": token.Div,
+	"%": token.Mod,
 }
 
 func New(input, path string) *Lexer {
@@ -33,9 +40,14 @@ func New(input, path string) *Lexer {
 }
 
 func isWordCh(ch byte) bool {
-	return (ch >= 'a' && ch <= 'z') || ch == '$' ||
-	       (ch >= 'A' && ch <= 'Z') || ch == '_' ||
-	       (ch >= '0' && ch <= '9')
+	switch ch {
+	case '$', '_', '+', '-', '*', '/', '%': return true
+
+	default:
+		return (ch >= 'a' && ch <= 'z') ||
+		       (ch >= 'A' && ch <= 'Z') ||
+		       (ch >= '0' && ch <= '9')
+	}
 }
 
 func isDecDigit(ch byte) bool {
@@ -82,7 +94,21 @@ func (l *Lexer) NextToken() (tok token.Token) {
 		case '@': tok = l.lexAddr()
 		case '.': tok = l.lexLabel()
 
-		case '-': tok = l.lexNum()
+		case '-':
+			if isDecDigit(l.peek()) {
+				tok = l.lexNum()
+			} else {
+				tok = l.lexWord()
+			}
+
+		case '(':
+			tok = token.Token{Type: token.LParen, Data: string(l.ch)}
+			l.next()
+
+		case ')':
+			tok = token.Token{Type: token.RParen, Data: string(l.ch)}
+			l.next()
+
 		case ',':
 			tok = token.Token{Type: token.Comma, Data: string(l.ch)}
 			l.next()
@@ -213,12 +239,7 @@ func (l *Lexer) lexNum() token.Token {
 func (l *Lexer) lexHex() token.Token {
 	str := ""
 
-	for !isWhitespace(l.ch) && l.ch != ',' && l.ch != ':' {
-		if !isHexDigit(l.ch) {
-			return token.NewError(l.where, "Unexpected character '%v' in hexadecimal number",
-			                      string(l.ch))
-		}
-
+	for isHexDigit(l.ch) {
 		str += string(l.ch)
 
 		l.next()
@@ -230,10 +251,14 @@ func (l *Lexer) lexHex() token.Token {
 func (l *Lexer) lexOct() token.Token {
 	str := ""
 
-	for !isWhitespace(l.ch) && l.ch != ',' && l.ch != ':' {
+	for {
 		if !isOctDigit(l.ch) {
-			return token.NewError(l.where, "Unexpected character '%v' in octal number",
-			                      string(l.ch))
+			if isHexDigit(l.ch) {
+				return token.NewError(l.where, "Unexpected character '%v' in octal number",
+				                      string(l.ch))
+			}
+
+			break
 		}
 
 		str += string(l.ch)
@@ -247,10 +272,14 @@ func (l *Lexer) lexOct() token.Token {
 func (l *Lexer) lexBin() token.Token {
 	str := ""
 
-	for !isWhitespace(l.ch) && l.ch != ',' && l.ch != ':' {
+	for {
 		if !isBinDigit(l.ch) {
-			return token.NewError(l.where, "Unexpected character '%v' in octal number",
-			                      string(l.ch))
+			if isHexDigit(l.ch) {
+				return token.NewError(l.where, "Unexpected character '%v' in binary number",
+				                      string(l.ch))
+			}
+
+			break
 		}
 
 		str += string(l.ch)
@@ -273,20 +302,22 @@ func (l *Lexer) lexDec() token.Token {
 			}
 
 			float = true
-		} else if !isDecDigit(l.ch) || l.ch == '-' {
-			if !(l.ch == '-' && atStart) {
+		} else if !isDecDigit(l.ch) && !(atStart && l.ch == '-') {
+			if isHexDigit(l.ch) {
 				return token.NewError(l.where, "Unexpected character '%v' in decimal number",
 				                      string(l.ch))
 			}
+
+			break
 		}
 
 		str += string(l.ch)
 
-		l.next()
-
 		if atStart {
 			atStart = false
 		}
+
+		l.next()
 	}
 
 	if float {

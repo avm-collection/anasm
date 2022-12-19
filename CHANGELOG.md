@@ -12,19 +12,20 @@
 - `0.6.1`: Support avm 0.4
 
 ## ANASM 1
-- `1.0.0`: Support avm 1.1 - remove registers, commas, improved dup and swap instructions - syntax
-           is stabilized
-- `1.1.0`: Remove colons, make the default output path be the basename of the input without the
-           extension. If there was no extension, add '.out'
-- `1.2.0`: Add a disassembler
-- `1.2.1`: Support avm 1.2 (just an internal avm update)
-- `1.3.1`: Support avm 1.5
-- `1.4.1`: Support avm 1.6
-- `1.4.2`: Fix octal integer lexing
-- `1.5.2`: Add binary integer and character literals support, prepare string support
-- `1.6.2`: Support avm 1.7, add strings
-- `1.7.2`: Support avm 1.8 (no changes to the assembler)
-- `1.7.3`: Fix variable addresses
-- `1.8.3`: Support avm 1.9 (file IO)
-- `1.9.3`: Support avm 1.10 (file IO improvement)
-- `1.9.4`: Fix escape sequence lexing
+- `1.0.0`:  Support avm 1.1 - remove registers, commas, improved dup and swap instructions - syntax
+            is stabilized
+- `1.1.0`:  Remove colons, make the default output path be the basename of the input without the
+            extension. If there was no extension, add '.out'
+- `1.2.0`:  Add a disassembler
+- `1.2.1`:  Support avm 1.2 (just an internal avm update)
+- `1.3.1`:  Support avm 1.5
+- `1.4.1`:  Support avm 1.6
+- `1.4.2`:  Fix octal integer lexing
+- `1.5.2`:  Add binary integer and character literals support, prepare string support
+- `1.6.2`:  Support avm 1.7, add strings
+- `1.7.2`:  Support avm 1.8 (no changes to the assembler)
+- `1.7.3`:  Fix variable addresses
+- `1.8.3`:  Support avm 1.9 (file IO)
+- `1.9.3`:  Support avm 1.10 (file IO improvement)
+- `1.9.4`:  Fix escape sequence lexing
+- `1.10.4`: Add constant expressions (szof, +, -, *, /, %)

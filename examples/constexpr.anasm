@@ -1,0 +1,47 @@
+let int_list sz64 1, 2, 3, 4, 5
+
+.entry
+	# Print 'Size: $(szof int_list)'
+	let MSG1 sz8 "Size: "
+
+	psh @MSG1
+	psh (szof MSG1)
+	psh 1                      # STDOUT
+	wrf
+
+	psh (szof int_list)
+	prt
+
+	# Print '5 + 5 * 2 = 15'
+	let MSG2 sz8 "5 + 5 * 2 = "
+
+	psh @MSG2
+	psh (szof MSG2)
+	psh 1                      # STDOUT
+	wrf
+
+	psh (+ 5 (* 5 2))
+	prt
+
+	# Print the 2nd and 4th elements of int_list
+	let MSG3 sz8 "int_list[1] = "
+
+	psh @MSG3
+	psh (szof MSG3)
+	psh 1                      # STDOUT
+	wrf
+
+	psh (+ @int_list (* 1 8))  # 2nd
+	r64
+	prt
+
+	let MSG4 sz8 "int_list[3] = "
+
+	psh @MSG4
+	psh (szof MSG4)
+	psh 1                      # STDOUT
+	wrf
+
+	psh (+ @int_list (* 3 8))  # 4th
+	r64
+	prt

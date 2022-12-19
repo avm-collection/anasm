@@ -35,12 +35,22 @@ const (
 	Size32
 	Size64
 
+	Add
+	Sub
+	Mult
+	Div
+	Mod
+	SizeOf
+
+	LParen
+	RParen
+
 	Error
 	count // Count of all token types
 )
 
 func AllTokensCoveredTest() {
-	if count != 18 {
+	if count != 26 {
 		panic("Cover all token types")
 	}
 }
@@ -68,6 +78,16 @@ func (t Type) String() string {
 	case Size16: return "sz16"
 	case Size32: return "sz32"
 	case Size64: return "sz64"
+
+	case Add:    return "+"
+	case Sub:    return "-"
+	case Mult:   return "*"
+	case Div:    return "/"
+	case Mod:    return "%"
+	case SizeOf: return "szof"
+
+	case LParen: return "("
+	case RParen: return ")"
 
 	case Error: return "error"
 
@@ -100,7 +120,7 @@ func NewError(where Where, format string, args... interface{}) Token {
 	return Token{Type: Error, Where: where, Data: fmt.Sprintf(format, args...)}
 }
 
-func (t Token) IsArg() bool {
+func (t Token) IsConstExprSimple() bool {
 	switch t.Type {
 	case Dec, Hex, Oct, Bin, Char, Float, Addr: return true
 
