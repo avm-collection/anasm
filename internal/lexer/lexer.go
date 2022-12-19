@@ -132,7 +132,7 @@ func (l *Lexer) lexString() token.Token {
 	str    := ""
 	escape := false
 
-	for l.next(); l.ch != '"' && !escape; l.next() {
+	for l.next(); !(l.ch == '"' && !escape); l.next() {
 		switch l.ch {
 		case '\\':
 			if escape {
@@ -151,6 +151,7 @@ func (l *Lexer) lexString() token.Token {
 				if !ok {
 					return token.NewError(l.where, "Unknown escape sequence '\\%v'", string(l.ch))
 				}
+				escape = false
 
 				str += string(ret)
 			} else {

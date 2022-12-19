@@ -1,7 +1,10 @@
-let SIZE sz64 5       # Size of file name string
 let NAME sz8  "a.txt" # File name
+let FD   sz64 0
 
-let FD sz64 0
+let TEXT sz8  "Hello, file!\n" # Text to write
+
+let BUF_SIZE sz64 0
+let BUF      sz8  0
 
 .get_fd
 	psh @FD
@@ -16,24 +19,30 @@ let FD sz64 0
 
 	ret
 
-.write_hi_to_file
-	cal @get_fd       # Write 'hi' into the file
-	psh 'i'
-	dup 1
-	psh 'h'
+.get_buf_size
+	psh @BUF_SIZE
+	r64
 
-	wrf
-	wrf
+	ret
+
+.set_buf_size
+	psh @BUF_SIZE      # Save the file descriptor into a variable
+	swp 0
+	w64
 
 	ret
 
 .write_file_example
-	psh @SIZE         # Push the address of the string
+	psh @NAME         # Push the address of the string
+	psh 5             # File name length
 	psh 0b0010        # Write mode
 	ope               # Open the file (returns a file ID)
 	cal @set_fd
 
-	cal @write_hi_to_file
+	psh 13            # Text length
+	psh @TEXT
+	cal @get_fd
+	wrf
 
 	cal @get_fd       # Close the file
 	clo
@@ -41,20 +50,25 @@ let FD sz64 0
 	ret
 
 .read_file_example
-	psh @SIZE         # Push the address of the string
+	psh @NAME         # Push the address of the string
+	psh 5             # File name length
 	psh 0b0001        # Read mode
 	ope               # Open the file (returns a file ID)
 	cal @set_fd
 
-.loop
-	cal @get_fd
-	rdf               # Read a byte from the file
-	dup  0            # Duplicate it for printing
-	prt               # Print it
+	cal @get_fd       # Size of the read
+	szf
+	cal @set_buf_size
 
-	psh -1            # EOF
-	neq
-	jnz @loop         # Loop while we didnt reach EOF
+	psh @BUF          # Address to write at
+	cal @get_buf_size
+	cal @get_fd
+	rdf               # Read the file
+
+	psh @BUF
+	cal @get_buf_size
+	psh 1             # STDOUT
+	wrf
 
 	cal @get_fd       # Close the file
 	clo

@@ -81,6 +81,7 @@ var (
 		"clo": Inst{Op: 0x71},
 		"wrf": Inst{Op: 0x72},
 		"rdf": Inst{Op: 0x73},
+		"szf": Inst{Op: 0x74},
 
 		"dmp": Inst{Op: 0xF0},
 		"prt": Inst{Op: 0xF1},

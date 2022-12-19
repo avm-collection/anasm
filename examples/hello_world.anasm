@@ -1,0 +1,7 @@
+let MSG sz8 "Hello, world!\n"
+
+.entry
+	psh @MSG    # Text to output
+	psh 14      # MSG length
+	psh 1       # STDOUT
+	wrf

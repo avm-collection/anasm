@@ -26,3 +26,5 @@
 - `1.7.2`: Support avm 1.8 (no changes to the assembler)
 - `1.7.3`: Fix variable addresses
 - `1.8.3`: Support avm 1.9 (file IO)
+- `1.9.3`: Support avm 1.10 (file IO improvement)
+- `1.9.4`: Fix escape sequence lexing
