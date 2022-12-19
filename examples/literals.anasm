@@ -1,4 +1,10 @@
 .entry
+	psh 10
+	prt
+
+	psh -52
+	prt
+
 	psh 0x64
 	prt
 
