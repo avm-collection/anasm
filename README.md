@@ -20,6 +20,7 @@ An assembler for the [AVM virtual machine](https://github.com/avm-collection/avm
 ## Table of contents
 * [Quickstart](#quickstart)
 * [Milestones](#milestones)
+* [Editors](#editors)
 * [Documentation](#documentation)
 * [Bugs](#bugs)
 * [Make](#make)
@@ -41,6 +42,9 @@ See [the `./examples` folder](./examples) for example programs
 - [X] Labels
 - [X] Instruction argument safety
 - [ ] Macros
+
+## Editors
+Syntax highlighting configs for text editors are in the [`./editors`](./editors) folder
 
 ## Documentation
 Hosted [here](https://avm-collection.github.io/anasm/documentation)
