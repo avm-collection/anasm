@@ -29,3 +29,4 @@
 - `1.9.3`:  Support avm 1.10 (file IO improvement)
 - `1.9.4`:  Fix escape sequence lexing
 - `1.10.4`: Add constant expressions (szof, +, -, *, /, %)
+- `1.11.4`: Add macros, let statement filling

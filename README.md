@@ -41,7 +41,7 @@ See [the `./examples` folder](./examples) for example programs
 - [X] Compiling basic instructions
 - [X] Labels
 - [X] Instruction argument safety
-- [ ] Macros
+- [X] Macros
 
 ## Editors
 Syntax highlighting configs for text editors are in the [`./editors`](./editors) folder

@@ -5,7 +5,7 @@ color brightyellow "\b(sz8|sz16|sz32|sz64)\b"
 color brightcyan   "\b(let|nop|psh|pop|add|sub|mul|div|mod|inc|dec|fad|fsb|fmu|fdi|fin|fde|neg)\b"
 color brightcyan   "\b(not|jmp|jnz|cal|ret|equ|neq|grt|geq|les|leq|ueq|une|ugr|ugq|ule|ulq|feq)\b"
 color brightcyan   "\b(fne|fgr|fgq|fle|flq|dup|swp|emp|set|cpy|r08|r16|r32|r64|w08|w16|w32|w64)\b"
-color brightcyan   "\b(dmp|prt|fpr|hlt|ope|clo|wrf|rdf|szf)\b"
+color brightcyan   "\b(dmp|prt|fpr|hlt|ope|clo|wrf|rdf|szf|mac)\b"
 
 color green  start="\"" end="\""
 color yellow start="'"  end="'"

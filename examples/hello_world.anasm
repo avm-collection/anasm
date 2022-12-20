@@ -1,7 +1,8 @@
+mac STDOUT 1
 let MSG sz8 "Hello, world!\n"
 
 .entry
 	psh @MSG         # Text to output
 	psh (szof MSG)   # MSG length
-	psh 1            # STDOUT
+	psh STDOUT
 	wrf

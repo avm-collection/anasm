@@ -30,6 +30,8 @@ const (
 	Addr // Variables, label references, for example 'jmp @label'
 
 	Let
+	Macro
+
 	Size8
 	Size16
 	Size32
@@ -42,6 +44,8 @@ const (
 	Mod
 	SizeOf
 
+	Dots
+
 	LParen
 	RParen
 
@@ -50,7 +54,7 @@ const (
 )
 
 func AllTokensCoveredTest() {
-	if count != 26 {
+	if count != 28 {
 		panic("Cover all token types")
 	}
 }
@@ -73,7 +77,9 @@ func (t Type) String() string {
 
 	case Addr: return "address"
 
-	case Let:    return "let"
+	case Let:   return "let"
+	case Macro: return "mac"
+
 	case Size8:  return "sz8"
 	case Size16: return "sz16"
 	case Size32: return "sz32"
@@ -85,6 +91,8 @@ func (t Type) String() string {
 	case Div:    return "/"
 	case Mod:    return "%"
 	case SizeOf: return "szof"
+
+	case Dots: return ".."
 
 	case LParen: return "("
 	case RParen: return ")"
@@ -105,8 +113,8 @@ type Token struct {
 func (tok Token) String() string {
 	switch tok.Type {
 	case EOF: return "'end of file'"
-	case Size8, Size16, Size32, Size64,
-	     Comma, Let: return "'" + tok.Type.String() +  "'"
+	case Size8, Size16, Size32, Size64, SizeOf, Add, Sub, Macro,
+	     Mult, Div, Mod, Comma, Let, Dots, LParen, RParen: return "'" + tok.Type.String() +  "'"
 
 	default: return fmt.Sprintf("'%v' of type '%v'", tok.Data, tok.Type)
 	}
@@ -122,7 +130,7 @@ func NewError(where Where, format string, args... interface{}) Token {
 
 func (t Token) IsConstExprSimple() bool {
 	switch t.Type {
-	case Dec, Hex, Oct, Bin, Char, Float, Addr: return true
+	case Dec, Hex, Oct, Bin, Char, Float, Addr, Word: return true
 
 	default: return false
 	}

@@ -16,7 +16,7 @@ type Word uint64
 
 const (
 	VersionMajor = 1
-	VersionMinor = 7
+	VersionMinor = 10
 	VersionPatch // Not keeping track of the patch
 )
 
@@ -34,6 +34,7 @@ type Compiler struct {
 
 	labels map[string]Word
 	vars   map[string]Var
+	macros map[string]Word
 
 	memory  bytes.Buffer
 	program bytes.Buffer
@@ -43,7 +44,9 @@ type Compiler struct {
 
 func New(input, path string) *Compiler {
 	return &Compiler{l: lexer.New(input, path),
-	                 labels: make(map[string]Word), vars: make(map[string]Var)}
+	                 labels: make(map[string]Word),
+	                 vars:   make(map[string]Var),
+	                 macros: make(map[string]Word)}
 }
 
 func (c *Compiler) Error(format string, args... interface{}) error {
@@ -124,6 +127,11 @@ func (c *Compiler) compile() error {
 				return err
 			}
 
+		case token.Macro:
+			if err := c.compileMacro(); err != nil {
+				return err
+			}
+
 		default: return c.Error("Unexpected %v", c.tok)
 		}
 	}
@@ -140,6 +148,38 @@ func (c *Compiler) writeMemory(data Word, size int) error {
 
 	default: return fmt.Errorf("Got wrong data element size %v", size)
 	}
+
+	return nil
+}
+
+func (c *Compiler) compileMacro() error {
+	c.next()
+	if c.tok.Type != token.Word {
+		return c.Error("Expected macro identifier, got %v", c.tok)
+	}
+	name  := c.tok.Data
+	_, ok := c.macros[name]
+	if ok {
+		return c.Error("Redefined macro '%v'", name)
+	}
+
+	_, ok = c.macros[name]
+	if ok {
+		return c.Error("Macro '%v' already exists", name)
+	}
+
+	c.next()
+	if !c.tok.IsConstExprSimple() && c.tok.Type != token.LParen {
+		return c.Error("Expected data, got %v", c.tok)
+	}
+
+	data, err := c.evalConstExpr(c.tok)
+	if err != nil {
+		return err
+	}
+
+	c.macros[name] = data
+	c.next()
 
 	return nil
 }
@@ -184,6 +224,8 @@ func (c *Compiler) compileLet() error {
 
 				size += Word(elemSize)
 			}
+
+			c.next()
 		} else {
 			if !c.tok.IsConstExprSimple() {
 				return c.Error("Expected data, got %v", c.tok)
@@ -194,13 +236,34 @@ func (c *Compiler) compileLet() error {
 				return err
 			}
 
-			if err := c.writeMemory(data, elemSize); err != nil {
-				return err
+			c.next()
+			if c.tok.Type == token.Dots {
+				c.next()
+				if !c.tok.IsConstExprSimple() {
+					return c.Error("Expected count, got %v", c.tok)
+				}
+
+				count, err := c.evalConstExpr(c.tok)
+				if err != nil {
+					return err
+				}
+
+				for ; count > 0; count -- {
+					if err := c.writeMemory(data, elemSize); err != nil {
+						return err
+					}
+					size += Word(elemSize)
+				}
+
+				c.next()
+			} else {
+				if err := c.writeMemory(data, elemSize); err != nil {
+					return err
+				}
+				size += Word(elemSize)
 			}
-			size += Word(elemSize)
 		}
 
-		c.next()
 		if c.tok.Type != token.Comma {
 			break
 		}
@@ -308,6 +371,14 @@ func (c *Compiler) evalConstExpr(tok token.Token) (Word, error) {
 			}
 
 			return data.Addr, nil
+		}
+
+		return data, nil
+
+	case token.Word:
+		data, ok := c.macros[tok.Data]
+		if !ok {
+			return 0, c.Error("Unexpected identifier '%v'", tok.Data)
 		}
 
 		return data, nil

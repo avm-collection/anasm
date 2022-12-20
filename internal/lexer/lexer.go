@@ -13,7 +13,9 @@ type Lexer struct {
 }
 
 var Keywords = map[string]token.Type{
-	"let":  token.Let,
+	"let": token.Let,
+	"mac": token.Macro,
+
 	"sz8":  token.Size8,
 	"sz16": token.Size16,
 	"sz32": token.Size32,
@@ -92,7 +94,15 @@ func (l *Lexer) NextToken() (tok token.Token) {
 		case '\'': tok = l.lexChar()
 
 		case '@': tok = l.lexAddr()
-		case '.': tok = l.lexLabel()
+		case '.':
+			if l.peek() == '.' {
+				l.next()
+
+				tok = token.Token{Type: token.Dots, Data: ".."}
+				l.next()
+			} else {
+				tok = l.lexLabel()
+			}
 
 		case '-':
 			if isDecDigit(l.peek()) {
