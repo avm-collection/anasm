@@ -30,3 +30,4 @@
 - `1.9.4`:  Fix escape sequence lexing
 - `1.10.4`: Add constant expressions (szof, +, -, *, /, %)
 - `1.11.4`: Add macros, let statement filling
+- `1.11.5`: Fix compiler bug with instruction arguments

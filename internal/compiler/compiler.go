@@ -169,7 +169,7 @@ func (c *Compiler) compileMacro() error {
 	}
 
 	c.next()
-	if !c.tok.IsConstExprSimple() && c.tok.Type != token.LParen {
+	if !(c.tok.IsConstExprSimple() && !isInst(c.tok.Data)) && c.tok.Type != token.LParen {
 		return c.Error("Expected data, got %v", c.tok)
 	}
 
@@ -227,7 +227,7 @@ func (c *Compiler) compileLet() error {
 
 			c.next()
 		} else {
-			if !c.tok.IsConstExprSimple() {
+			if !(c.tok.IsConstExprSimple() && !isInst(c.tok.Data)) {
 				return c.Error("Expected data, got %v", c.tok)
 			}
 
@@ -281,6 +281,12 @@ func (c *Compiler) writeInst(op byte, data Word) {
 	binary.Write(&c.program, binary.BigEndian, data)
 }
 
+func isInst(name string) bool {
+	_, ok := Insts[name]
+
+	return ok
+}
+
 func (c *Compiler) compileInst() error {
 	tok := c.tok
 
@@ -290,7 +296,7 @@ func (c *Compiler) compileInst() error {
 	}
 
 	c.next()
-	if !c.tok.IsConstExprSimple() && c.tok.Type != token.LParen {
+	if !(c.tok.IsConstExprSimple() && !isInst(c.tok.Data)) && c.tok.Type != token.LParen {
 		if inst.HasArg {
 			return c.ErrorFrom(tok.Where, "Instruction '%v' expects an argument", tok.Data)
 		}
