@@ -16,11 +16,14 @@ var Keywords = map[string]token.Type{
 	"let": token.Let,
 	"mac": token.Macro,
 
-	"sz8":  token.Size8,
-	"sz16": token.Size16,
-	"sz32": token.Size32,
-	"sz64": token.Size64,
-	"szof": token.SizeOf,
+	"byte": token.TypeByte,
+	"char": token.TypeChar,
+	"i16":  token.TypeInt16,
+	"i32":  token.TypeInt32,
+	"i64":  token.TypeInt64,
+	"f64":  token.TypeFloat64,
+
+	"sizeof": token.SizeOf,
 
 	"+": token.Add,
 	"-": token.Sub,
@@ -93,7 +96,6 @@ func (l *Lexer) NextToken() (tok token.Token) {
 		case '"':  tok = l.lexString()
 		case '\'': tok = l.lexChar()
 
-		case '@': tok = l.lexAddr()
 		case '.':
 			if l.peek() == '.' {
 				l.next()
@@ -121,6 +123,10 @@ func (l *Lexer) NextToken() (tok token.Token) {
 
 		case ',':
 			tok = token.Token{Type: token.Comma, Data: string(l.ch)}
+			l.next()
+
+		case '=':
+			tok = token.Token{Type: token.Equals, Data: string(l.ch)}
 			l.next()
 
 		default:
@@ -344,15 +350,6 @@ func (l *Lexer) lexLabel() token.Token {
 	}
 
 	return token.Token{Type: token.Label, Data: l.readWord()}
-}
-
-func (l *Lexer) lexAddr() token.Token {
-	if l.next(); !isWordCh(l.ch) {
-		return token.NewError(l.where, "Unexpected character '%v' in address name",
-		                      string(l.ch))
-	}
-
-	return token.Token{Type: token.Addr, Data: l.readWord()}
 }
 
 func (l *Lexer) lexWord() token.Token {

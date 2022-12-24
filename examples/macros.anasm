@@ -1,5 +1,0 @@
-mac ADD_5_AND_-10 (+ 5 -10)
-
-.entry
-	psh ADD_5_AND_-10
-	prt

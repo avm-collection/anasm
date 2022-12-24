@@ -1,8 +1,8 @@
-mac STDOUT 1
-let MSG sz8 "Hello, world!\n"
+mac STDOUT   = 1
+let MSG char = "Hello, world!\n"
 
-.entry
-	psh @MSG         # Text to output
-	psh (szof MSG)   # MSG length
-	psh STDOUT
-	wrf
+.entry                 # Program entry point
+	psh MSG            # Text to output
+	psh (sizeof MSG)   # MSG length
+	psh STDOUT         # Write to file stdout
+	wrf                # Write

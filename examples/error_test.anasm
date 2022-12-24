@@ -1,0 +1,8 @@
+# No entry point
+
+.test
+.test         # Redefined label
+
+(+ 5 2) psh   # Incorrect order
+hlt 5         # hlt takes no parameters
+lol           # Undefined instruction

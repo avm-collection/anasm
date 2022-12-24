@@ -31,3 +31,5 @@
 - `1.10.4`: Add constant expressions (szof, +, -, *, /, %)
 - `1.11.4`: Add macros, let statement filling
 - `1.11.5`: Fix compiler bug with instruction arguments
+- `1.12.5`: Syntax changes (remove '@' before var/label referemces, new type names...)
+- `1.13.5`: Better error system

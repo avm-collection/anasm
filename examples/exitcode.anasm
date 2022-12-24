@@ -1,0 +1,5 @@
+.entry
+	psh 5   # Push 5 to the stack
+	psh 2   # Push 2 to the stack
+	add     # Add together the top two elements and put the result on the stack
+	hlt     # Halt the program using the top element as the exitcode

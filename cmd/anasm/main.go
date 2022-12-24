@@ -13,11 +13,12 @@ import (
 )
 
 var (
-	out = flag.String("o",         "",      "Path of the output binary")
-	v   = flag.Bool("version",    false,   "Show the version")
-	e   = flag.Bool("executable", true,    "Make the output file executable")
-	d   = flag.Bool("disasm",     false,   "Run the disassembler")
-	noW = flag.Bool("noW",        false,   "Dont show warnings")
+	out  = flag.String("o",        "",      "Path of the output binary")
+	v    = flag.Bool("version",    false,   "Show the version")
+	e    = flag.Bool("executable", true,    "Make the output file executable")
+	d    = flag.Bool("disasm",     false,   "Run the disassembler")
+	noW  = flag.Bool("noW",        false,   "Dont show warnings")
+	maxE = flag.Int("maxE",        8,       "Max compiler errors count")
 
 	args []string
 )
@@ -83,8 +84,10 @@ func assemble(input, path string) {
 
 	c := compiler.New(input, path)
 
-	if err := c.CompileToBinary(*out, *e); err != nil {
-		printError(err.Error())
+	if errs := c.CompileToBinary(*out, *e, *maxE); len(errs) > 0 {
+		for _, err := range errs {
+			fmt.Fprintf(os.Stderr, "%v\n", err.Error())
+		}
 	}
 }
 
