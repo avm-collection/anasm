@@ -109,12 +109,15 @@ func (c *Compiler) CompileToBinary(path string, executable bool, maxE int) []err
 	c.maxE = maxE
 
 	c.preproc()
+	c.programSize = c.pos // Program size (in instructions)
+
 	c.compile()
 
 	entry, ok := c.labels["entry"]
 	if !ok {
 		c.errs = append(c.errs, fmt.Errorf("Error: Program entry point label 'entry' not found"))
 	}
+	c.entryPoint = Word(entry)
 
 	if len(c.errs) > 0 {
 		if len(c.errs) > c.maxE {
@@ -124,10 +127,6 @@ func (c *Compiler) CompileToBinary(path string, executable bool, maxE int) []err
 
 		return c.errs
 	}
-
-	// Program size (in instructions) and program entry point
-	c.programSize = Word(c.pos)
-	c.entryPoint  = Word(entry)
 
 	f, err := os.Create(path)
 	if err != nil {
@@ -469,12 +468,16 @@ func (c *Compiler) compileLet() error {
 				for i := Word(0); i < count; i ++ {
 					c.writeMemory(data, size)
 				}
+
+				c.next()
 			} else {
 				c.writeMemory(data, size)
 			}
 		}
 
-		if c.tok.Type != token.Comma {
+		if c.tok.Type == token.Comma {
+			c.next()
+		} else {
 			break
 		}
 	}
