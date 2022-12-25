@@ -1,0 +1,5 @@
+.entry
+	psh (+ 5 2)
+	prt
+	psh (+ 5.0 2.0)
+	prt

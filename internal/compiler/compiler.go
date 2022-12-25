@@ -108,7 +108,9 @@ func (c *Compiler) writeInst(op byte, data Word) {
 func (c *Compiler) CompileToBinary(path string, executable bool, maxE int) []error {
 	c.maxE = maxE
 
-	c.preproc()
+	if !c.preproc() {
+		return c.errs
+	}
 	c.programSize = c.pos // Program size (in instructions)
 
 	c.compile()
@@ -319,11 +321,11 @@ func (c *Compiler) evalArith() (res Word, err error) {
 			firstArg = false
 		} else {
 			switch instrinsic.Type {
-			case token.Add:  res -= data
+			case token.Add:  res += data
 			case token.Sub:  res -= data
-			case token.Mult: res -= data
-			case token.Div:  res -= data
-			case token.Mod:  res -= data
+			case token.Mult: res *= data
+			case token.Div:  res /= data
+			case token.Mod:  res %= data
 
 			default: panic("Unknown intrinsic.Type")
 			}
@@ -506,13 +508,13 @@ func (c *Compiler) next() {
 	c.tok = c.toks[c.pos]
 }
 
-func (c *Compiler) preproc() {
+func (c *Compiler) preproc() bool {
 	for c.tok = c.l.NextToken(); c.tok.Type != token.EOF; c.tok = c.l.NextToken() {
 		// Eat and evaluate the preprocessor, leave out the other tokens
 		switch c.tok.Type {
 		case token.Error:
 			c.errs = append(c.errs, c.errorAt(c.tok.Where, c.tok.Data))
-			return
+			return false
 
 		case token.Word:
 			if c.isTokInst(c.tok) {
@@ -531,7 +533,7 @@ func (c *Compiler) preproc() {
 		}
 
 		if len(c.errs) > c.maxE {
-			return
+			return true
 		}
 
 		c.toks = append(c.toks, c.tok)
@@ -539,4 +541,6 @@ func (c *Compiler) preproc() {
 
 	// Add the EOF token
 	c.toks = append(c.toks, c.tok)
+
+	return true
 }

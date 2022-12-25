@@ -1,0 +1,6 @@
+let NUMS byte = 5, 12
+
+.entry
+	psh (+ NUMS 1)
+	r08
+	prt
