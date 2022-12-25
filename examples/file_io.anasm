@@ -1,0 +1,98 @@
+# File modes
+mac MODE_READING = 0b0001
+mac MODE_WRITING = 0b0010
+
+# Files opened on default
+mac STDIN  = 0
+mac STDOUT = 1
+mac STDERR = 2
+
+let FILE_NAME char = "a.txt"
+let TO_WRITE  char = "Hello, world!\nHow are you?\n"
+let READ_BUF  char = 0 .. (sizeof TO_WRITE)
+
+let FD i64 = 0
+
+# Helper functions for shorter code
+.set_fd
+	psh FD
+	swp 0
+	w64
+
+	ret
+
+.get_fd
+	psh FD
+	r64
+
+	ret
+
+.print
+	psh STDOUT
+	wrf
+
+	ret
+
+# Examples
+.write
+	# Open the file for writing
+	psh FILE_NAME
+	psh (sizeof FILE_NAME)
+	psh MODE_WRITING
+	ope
+	cal set_fd
+
+	# Write to the file
+	psh TO_WRITE
+	psh (sizeof TO_WRITE)
+	cal get_fd
+	wrf
+
+	let MSG1 char = "Wrote file 'a.txt'\n"
+	psh MSG1
+	psh (sizeof MSG1)
+	cal print
+
+	# Close the file
+	cal get_fd
+	clo
+
+	ret
+
+.read
+	# Open the file for reading
+	psh FILE_NAME
+	psh (sizeof FILE_NAME)
+	psh MODE_READING
+	ope
+	cal set_fd
+
+	# Read from the file
+	psh READ_BUF
+	psh (sizeof READ_BUF)
+	cal get_fd
+	rdf
+
+	let MSG2 char = "Read from file 'a.txt':\n```\n"
+	psh MSG2
+	psh (sizeof MSG2)
+	cal print
+
+	psh READ_BUF
+	psh (sizeof READ_BUF)
+	cal print
+
+	let MSG3 char = "```\n"
+	psh MSG3
+	psh (sizeof MSG3)
+	cal print
+
+	# Close the file
+	cal get_fd
+	clo
+
+	ret
+
+.entry
+	cal write
+	cal read
