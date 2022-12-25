@@ -34,3 +34,4 @@
 - `1.12.5`: Syntax changes (remove '@' before var/label referemces, new type names...)
 - `1.13.5`: Better error system
 - `1.13.6`: Fix a bug with program size and with let arrays
+- `1.13.7`: Fix the disassembler
