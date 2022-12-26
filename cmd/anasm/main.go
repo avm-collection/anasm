@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/avm-collection/anasm/internal/token"
 	"github.com/avm-collection/anasm/internal/config"
 	"github.com/avm-collection/anasm/internal/compiler"
 	"github.com/avm-collection/anasm/internal/disasm"
