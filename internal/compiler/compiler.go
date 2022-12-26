@@ -16,7 +16,7 @@ type Word uint64
 
 const (
 	VersionMajor = 1
-	VersionMinor = 10
+	VersionMinor = 11
 	VersionPatch // Not keeping track of the patch
 )
 

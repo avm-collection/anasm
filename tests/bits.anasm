@@ -1,0 +1,20 @@
+.entry
+	psh 3     # 3 & 2
+	psh 2
+	ban
+	prt
+
+	psh 3     # 3 | 4
+	psh 4
+	bor
+	prt
+
+	psh 256   # 256 >> 1
+	psh 1
+	bsr
+	prt
+
+	psh 1     # 1 << 2
+	psh 2
+	bsl
+	prt

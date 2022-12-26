@@ -40,6 +40,9 @@ var (
 		"cal": Inst{Op: 0x38, HasArg: true},
 		"ret": Inst{Op: 0x39},
 
+		"and": Inst{Op: 0x46},
+		"orr": Inst{Op: 0x47},
+
 		"equ": Inst{Op: 0x32},
 		"neq": Inst{Op: 0x33},
 		"grt": Inst{Op: 0x34},
@@ -82,6 +85,11 @@ var (
 		"wrf": Inst{Op: 0x72},
 		"rdf": Inst{Op: 0x73},
 		"szf": Inst{Op: 0x74},
+
+		"ban": Inst{Op: 0x80},
+		"bor": Inst{Op: 0x81},
+		"bsr": Inst{Op: 0x82},
+		"bsl": Inst{Op: 0x83},
 
 		"dmp": Inst{Op: 0xF0},
 		"prt": Inst{Op: 0xF1},
