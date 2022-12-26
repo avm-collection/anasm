@@ -1,6 +1,13 @@
-let NUMS byte = 5, 12
+# ANASM mem read test, compared to C equivalent
 
-.entry
-	psh (+ NUMS 1)
+                          # #include <stdio.h>
+
+let NUMS byte = 5, 12     # char NUMS[] = {5, 12};
+
+.entry                    # int main(void) {
+	psh (+ NUMS 1)        #     printf("%i\n", (int)NUMS[1]);
 	r08
 	prt
+
+	psh 0                 #     return 0;
+	hlt                   # }

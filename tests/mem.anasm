@@ -1,34 +1,36 @@
-mac STDOUT = 1
+# ANASM memory test, compared to C equivalent                         # #include <stdio.h>
+                                                                      # #include <stdint.h>
+mac STDOUT = 1                                                        # #define STDOUT 1
 
-let NUM i64 = 1024
+let NUM i64 = 1024                                                    # int64_t NUM = 1024;
 
-.print_addr
-	let print_addr_MSG char = "Variable address: "
+.print_addr                                                           # void print_addr() {
+	let print_addr_MSG char = "Variable address: "                    #     printf("Variable address: ");
 	psh print_addr_MSG
 	psh (sizeof print_addr_MSG)
 	psh STDOUT
 	wrf
 
-	psh NUM
+	psh NUM                                                           #     printf("%p\n", &NUM);
 	prt
 
-	ret
+	ret                                                               # }
 
-.print_value
-	let print_value_MSG char = "Current value:    "
+.print_value                                                          # void print_value() {
+	let print_value_MSG char = "Current value:    "                   #     printf("Current value: ");
 	psh print_value_MSG
 	psh (sizeof print_value_MSG)
 	psh STDOUT
 	wrf
 
-	psh NUM
+	psh NUM                                                           #     printf("%i\n", (int)NUM);
 	r64
 	prt
 
-	ret
+	ret                                                               # }
 
-.mult_value_by_2
-	psh NUM
+.mult_value_by_2                                                      # void mult_value_by_2() {
+	psh NUM                                                           #     NUM *= 2;
 	r64
 	psh 2
 	mul
@@ -37,16 +39,19 @@ let NUM i64 = 1024
 	swp 0
 	w64
 
-	let mult_value_by_2_MSG char = "Multiplied value by 2\n"
+	let mult_value_by_2_MSG char = "Multiplied value by 2\n"          #     printf("Multiplied value by 2\n");
 	psh mult_value_by_2_MSG
 	psh (sizeof mult_value_by_2_MSG)
 	psh STDOUT
 	wrf
 
-	ret
+	ret                                                               # }
 
-.entry
-	cal print_addr
-	cal print_value
-	cal mult_value_by_2
-	cal print_value
+.entry                                                                # int main(void) {
+	cal print_addr                                                    #     print_addr();
+	cal print_value                                                   #     print_value();
+	cal mult_value_by_2                                               #     mult_value_by_2();
+	cal print_value                                                   #     print_value();
+
+	psh 0                                                             #     return 0;
+	hlt                                                               # }
