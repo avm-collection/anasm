@@ -39,8 +39,6 @@ var Keywords = map[string]token.Type{
 }
 
 func New(input, path string) *Lexer {
-	token.AllTokensCoveredTest()
-
 	l := &Lexer{input: input, pos: -1}
 	l.next()
 

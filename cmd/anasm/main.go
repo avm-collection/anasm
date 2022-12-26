@@ -45,6 +45,8 @@ func version() {
 }
 
 func init() {
+	token.AllTokensCoveredTest()
+
 	flag.Usage = usage
 
 	// Aliases
