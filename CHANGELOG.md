@@ -36,3 +36,4 @@
 - `1.13.6`: Fix a bug with program size and with let arrays
 - `1.13.7`: Fix the disassembler
 - `1.13.8`: Fix constant expressions and lexer errors
+- `1.14.8`: Add power, bit and, bit or and bit shifting operations to constant expressions

@@ -100,6 +100,15 @@ func (c *Compiler) isTokExprStart(tok token.Token) bool {
 	}
 }
 
+func (c *Compiler) isArithIntrinsic(tok token.Token) bool {
+	switch tok.Type {
+	case token.Add,    token.Sub,   token.Mult,      token.Div,      token.Mod,
+	     token.BitAnd, token.BitOr, token.BitSRight, token.BitSLeft, token.Pow: return true
+
+	default: return false
+	}
+}
+
 func (c *Compiler) writeInst(op byte, data Word) {
 	binary.Write(&c.program, binary.BigEndian, op)
 	binary.Write(&c.program, binary.BigEndian, data)
@@ -258,10 +267,14 @@ func (c *Compiler) evalExpr() (data Word, err error) {
 func (c *Compiler) evalParen() (Word, error) {
 	c.next()
 	switch c.tok.Type {
-	case token.Add, token.Sub, token.Mult, token.Div, token.Mod: return c.evalArith()
 	case token.SizeOf: return c.evalSizeOf()
 
-	default: return 0, c.errorHere("Expected intrinsic name, got %v", c.tok)
+	default:
+		if c.isArithIntrinsic(c.tok) {
+			return c.evalArith()
+		} else {
+			return 0, c.errorHere("Expected intrinsic name, got %v", c.tok)
+		}
 	}
 }
 
@@ -326,6 +339,12 @@ func (c *Compiler) evalArith() (res Word, err error) {
 			case token.Mult: res *= data
 			case token.Div:  res /= data
 			case token.Mod:  res %= data
+			case token.Pow:  res  = Word(math.Pow(float64(res), float64(data)))
+
+			case token.BitAnd:    res &=  data
+			case token.BitOr:     res |=  data
+			case token.BitSRight: res >>= data
+			case token.BitSLeft:  res <<= data
 
 			default: panic("Unknown intrinsic.Type")
 			}
@@ -389,7 +408,7 @@ func (c *Compiler) compileMacro() error {
 	}
 
 	if c.next(); c.tok.Type != token.Equals {
-		return c.errorHere("Expected macro assignment with '%v', got %v", token.Equals, c.tok)
+		return c.errorHere("Expected macro assignment with '=', got %v", c.tok)
 	}
 	c.next()
 
@@ -437,7 +456,7 @@ func (c *Compiler) compileLet() error {
 	}
 
 	if c.next(); c.tok.Type != token.Equals {
-		return c.errorHere("Expected variable assignment with '%v', got %v", token.Equals, c.tok)
+		return c.errorHere("Expected variable assignment with '=', got %v", c.tok)
 	}
 	c.next()
 

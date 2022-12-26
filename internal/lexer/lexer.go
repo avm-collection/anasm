@@ -30,6 +30,12 @@ var Keywords = map[string]token.Type{
 	"*": token.Mult,
 	"/": token.Div,
 	"%": token.Mod,
+	"^": token.Pow,
+
+	"&":  token.BitAnd,
+	"|":  token.BitOr,
+	">>": token.BitSRight,
+	"<<": token.BitSLeft,
 }
 
 func New(input, path string) *Lexer {
@@ -46,7 +52,7 @@ func New(input, path string) *Lexer {
 
 func isWordCh(ch byte) bool {
 	switch ch {
-	case '$', '_', '+', '-', '*', '/', '%': return true
+	case '$', '_', '+', '-', '*', '/', '%', '>', '<', '&', '|', '^': return true
 
 	default:
 		return (ch >= 'a' && ch <= 'z') ||

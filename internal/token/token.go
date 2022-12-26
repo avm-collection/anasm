@@ -43,6 +43,13 @@ const (
 	Mult
 	Div
 	Mod
+	Pow
+
+	BitAnd
+	BitOr
+	BitSRight
+	BitSLeft
+
 	SizeOf
 
 	Dots
@@ -55,7 +62,7 @@ const (
 )
 
 func AllTokensCoveredTest() {
-	if count != 30 {
+	if count != 35 {
 		panic("Cover all token types")
 	}
 }
@@ -87,11 +94,18 @@ func (t Type) String() string {
 	case TypeInt64:   return "int64"
 	case TypeFloat64: return "float64"
 
-	case Add:    return "+"
-	case Sub:    return "-"
-	case Mult:   return "*"
-	case Div:    return "/"
-	case Mod:    return "%"
+	case Add:  return "+"
+	case Sub:  return "-"
+	case Mult: return "*"
+	case Div:  return "/"
+	case Mod:  return "%"
+	case Pow:  return "^"
+
+	case BitAnd:    return "&"
+	case BitOr:     return "|"
+	case BitSRight: return ">>"
+	case BitSLeft:  return "<<"
+
 	case SizeOf: return "sizeof"
 
 	case Dots: return ".."

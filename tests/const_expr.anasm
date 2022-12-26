@@ -1,0 +1,11 @@
+.entry
+	psh (+  7    5) prt
+	psh (-  1    2) prt
+	psh (*  8    8) prt
+	psh (/  4    2) prt
+	psh (%  12   8) prt
+	psh (^  2    8) prt
+	psh (&  3    2) prt
+	psh (|  3    4) prt
+	psh (>> 256  1) prt
+	psh (<< 1    2) prt

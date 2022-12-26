@@ -1,0 +1,52 @@
+mac STDOUT = 1
+
+let NUM i64 = 1024
+
+.print_addr
+	let print_addr_MSG char = "Variable address: "
+	psh print_addr_MSG
+	psh (sizeof print_addr_MSG)
+	psh STDOUT
+	wrf
+
+	psh NUM
+	prt
+
+	ret
+
+.print_value
+	let print_value_MSG char = "Current value:    "
+	psh print_value_MSG
+	psh (sizeof print_value_MSG)
+	psh STDOUT
+	wrf
+
+	psh NUM
+	r64
+	prt
+
+	ret
+
+.mult_value_by_2
+	psh NUM
+	r64
+	psh 2
+	mul
+
+	psh NUM
+	swp 0
+	w64
+
+	let mult_value_by_2_MSG char = "Multiplied value by 2\n"
+	psh mult_value_by_2_MSG
+	psh (sizeof mult_value_by_2_MSG)
+	psh STDOUT
+	wrf
+
+	ret
+
+.entry
+	cal print_addr
+	cal print_value
+	cal mult_value_by_2
+	cal print_value
