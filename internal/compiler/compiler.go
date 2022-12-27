@@ -259,6 +259,8 @@ func (c *Compiler) evalExpr() (data Word, err error) {
 
 		default: return 0, c.errorHere("Undefined identifier '%v'", c.tok.Data)
 		}
+
+	default: return 0, c.errorHere("Unexpected %v", c.tok)
 	}
 
 	return
@@ -459,7 +461,6 @@ func (c *Compiler) compileLet() error {
 		return c.errorHere("Expected variable assignment with '=', got %v", c.tok)
 	}
 	c.next()
-
 
 	addr      := c.memorySize + 1
 	startSize := c.memorySize
