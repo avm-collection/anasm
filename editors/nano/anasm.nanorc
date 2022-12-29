@@ -1,11 +1,13 @@
 syntax "anasm" "\.anasm$"
 
 color brightred    "\.\b([0-9a-zA-Z_]+)\b"
+color brightred    "\b(include)\b"
 color brightyellow "\b(char|byte|i16|i32|i64|f32)\b"
 color brightcyan   "\b(let|nop|psh|pop|add|sub|mul|div|mod|inc|dec|fad|fsb|fmu|fdi|fin|fde|neg)\b"
 color brightcyan   "\b(not|jmp|jnz|cal|ret|equ|neq|grt|geq|les|leq|ueq|une|ugr|ugq|ule|ulq|feq)\b"
 color brightcyan   "\b(fne|fgr|fgq|fle|flq|dup|swp|emp|set|cpy|r08|r16|r32|r64|w08|w16|w32|w64)\b"
-color brightcyan   "\b(dmp|prt|fpr|hlt|ope|clo|wrf|rdf|szf|mac|and|orr|ban|bor|bsr|bsl)\b"
+color brightcyan   "\b(dmp|prt|fpr|hlt|ope|clo|wrf|rdf|szf|mac|and|orr|ban|bor|bsr|bsl|lol|cll)\b"
+color brightcyan   "\b(llf|ulf|clf|emb)\b"
 
 color green  start="\"" end="\""
 color yellow start="'"  end="'"

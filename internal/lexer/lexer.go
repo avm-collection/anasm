@@ -15,6 +15,7 @@ type Lexer struct {
 var Keywords = map[string]token.Type{
 	"let": token.Let,
 	"mac": token.Macro,
+	"emb": token.Embed,
 
 	"byte": token.TypeByte,
 	"char": token.TypeChar,
@@ -36,6 +37,8 @@ var Keywords = map[string]token.Type{
 	"|":  token.BitOr,
 	">>": token.BitSRight,
 	"<<": token.BitSLeft,
+
+	"include": token.Include,
 }
 
 func New(input, path string) *Lexer {

@@ -57,12 +57,15 @@ const (
 	LParen
 	RParen
 
+	Include
+	Embed
+
 	Error
 	count // Count of all token types
 )
 
 func AllTokensCoveredTest() {
-	if count != 35 {
+	if count != 37 {
 		panic("Cover all token types")
 	}
 }
@@ -112,6 +115,9 @@ func (t Type) String() string {
 
 	case LParen: return "("
 	case RParen: return ")"
+
+	case Include: return "include"
+	case Embed:   return "embed"
 
 	case Error: return "error"
 

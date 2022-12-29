@@ -39,6 +39,8 @@ type Compiler struct {
 	memory  bytes.Buffer
 	program bytes.Buffer
 
+	input, path string
+
 	l *lexer.Lexer
 
 	errs []error
@@ -46,7 +48,7 @@ type Compiler struct {
 }
 
 func New(input, path string) *Compiler {
-	return &Compiler{l: lexer.New(input, path),
+	return &Compiler{input: input, path: path,
 	                 labels: make(map[string]Word),
 	                 vars:   make(map[string]Var),
 	                 macros: make(map[string]Word)}
@@ -117,9 +119,13 @@ func (c *Compiler) writeInst(op byte, data Word) {
 func (c *Compiler) CompileToBinary(path string, executable bool, maxE int) []error {
 	c.maxE = maxE
 
-	if !c.preproc() {
+	if !c.preproc(c.input, c.path) {
 		return c.errs
 	}
+
+	// Add the EOF token
+	c.toks = append(c.toks, c.tok)
+
 	c.programSize = c.pos // Program size (in instructions)
 
 	c.compile()
@@ -189,6 +195,12 @@ func (c *Compiler) compile() {
 
 		case token.Let:
 			if err := c.compileLet(); err != nil {
+				c.errs = append(c.errs, err)
+				c.next()
+			}
+
+		case token.Embed:
+			if err := c.compileEmbed(); err != nil {
 				c.errs = append(c.errs, err)
 				c.next()
 			}
@@ -403,7 +415,10 @@ func (c *Compiler) idExists(tok token.Token) error {
 }
 
 func (c *Compiler) compileMacro() error {
-	c.next()
+	if c.next(); c.tok.Type != token.Word {
+		return c.errorHere("Expected macro identifier, got %v", c.tok)
+	}
+
 	id := c.tok
 	if err := c.idExists(id); err != nil {
 		return err
@@ -445,7 +460,10 @@ func (c *Compiler) writeMemory(data Word, size int) error {
 }
 
 func (c *Compiler) compileLet() error {
-	c.next()
+	if c.next(); c.tok.Type != token.Word {
+		return c.errorHere("Expected variable identifier, got %v", c.tok)
+	}
+
 	id := c.tok
 	if err := c.idExists(id); err != nil {
 		return err
@@ -509,6 +527,38 @@ func (c *Compiler) compileLet() error {
 	return nil
 }
 
+func (c *Compiler) compileEmbed() error {
+	if c.next(); c.tok.Type != token.Word {
+		return c.errorHere("Expected file identifier, got %v", c.tok)
+	}
+
+	id := c.tok
+	if err := c.idExists(id); err != nil {
+		return err
+	}
+
+	if c.next(); c.tok.Type != token.String {
+		return c.errorHere("Expected file path, got %v", c.tok)
+	}
+
+	data, err := os.ReadFile(c.tok.Data)
+	if err != nil {
+		return c.errorHere("Could not embed file '%v'", c.tok.Data)
+	}
+	c.next()
+
+	addr      := c.memorySize + 1
+	startSize := c.memorySize
+
+	for _, byte_ := range data {
+		c.writeMemory(Word(byte_), 1)
+	}
+
+	c.vars[id.Data] = Var{Addr: addr, Size: c.memorySize - startSize}
+
+	return nil
+}
+
 func (c *Compiler) writeString(data string, charSize int) error {
 	for _, ch := range data {
 		if err := c.writeMemory(Word(ch), charSize); err != nil {
@@ -528,21 +578,23 @@ func (c *Compiler) next() {
 	c.tok = c.toks[c.pos]
 }
 
-func (c *Compiler) preproc() bool {
-	for c.tok = c.l.NextToken(); c.tok.Type != token.EOF; c.tok = c.l.NextToken() {
+func (c *Compiler) preproc(input, path string) bool {
+	l := lexer.New(input, path)
+
+	for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
 		// Eat and evaluate the preprocessor, leave out the other tokens
-		switch c.tok.Type {
+		switch tok.Type {
 		case token.Error:
-			c.errs = append(c.errs, c.errorAt(c.tok.Where, c.tok.Data))
+			c.errs = append(c.errs, c.errorAt(tok.Where, tok.Data))
 			return false
 
 		case token.Word:
-			if c.isTokInst(c.tok) {
+			if c.isTokInst(tok) {
 				c.pos ++
 			}
 
 		case token.Label:
-			id := c.tok
+			id := tok
 			if err := c.idExists(id); err != nil {
 				c.errs = append(c.errs, err)
 			}
@@ -550,17 +602,40 @@ func (c *Compiler) preproc() bool {
 			c.labels[id.Data] = c.pos
 
 			continue
+
+		case token.Include:
+			tok = l.NextToken()
+			if tok.Type == token.Error {
+				c.errs = append(c.errs, c.errorAt(tok.Where, tok.Data))
+				return false
+			}
+
+			if tok.Type != token.String {
+				c.errs = append(c.errs, c.errorAt(tok.Where, "'include' expected string, got %v",
+				                                  tok))
+				continue
+			}
+
+			data, err := os.ReadFile(tok.Data)
+			if err != nil {
+				c.errs = append(c.errs, c.errorAt(tok.Where, "Could not include file '%v'",
+				                                  tok.Data))
+				continue
+			}
+
+			if !c.preproc(string(data), tok.Data) {
+				return false
+			}
+
+			continue
 		}
 
 		if len(c.errs) > c.maxE {
-			return true
+			return false
 		}
 
-		c.toks = append(c.toks, c.tok)
+		c.toks = append(c.toks, tok)
 	}
-
-	// Add the EOF token
-	c.toks = append(c.toks, c.tok)
 
 	return true
 }

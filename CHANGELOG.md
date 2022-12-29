@@ -39,3 +39,5 @@
 - `1.14.8`: Add power, bit and, bit or and bit shifting operations to constant expressions
 - `1.15.8`: Support avm 1.11
 - `1.15.9`: Fix the compiler not erroring over invalid expressions
+- `1.16.9`: Support avm 1.12 (loading shared libraries)
+- `1.17.9`: Add include and emb keywords

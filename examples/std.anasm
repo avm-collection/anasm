@@ -1,0 +1,6 @@
+mac STDIN  = 0
+mac STDOUT = 1
+mac STDERR = 2
+
+mac EXIT_FAIL = 1
+mac EXIT_OK   = 0

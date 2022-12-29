@@ -1,0 +1,9 @@
+include "./examples/std.anasm"
+
+emb INFO "./a.txt"
+
+.entry
+	psh INFO
+	psh (sizeof INFO)
+	psh STDOUT
+	wrf

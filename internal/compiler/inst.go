@@ -91,6 +91,12 @@ var (
 		"bsr": Inst{Op: 0x82},
 		"bsl": Inst{Op: 0x83},
 
+		"lol": Inst{Op: 0x90},
+		"cll": Inst{Op: 0x91},
+		"llf": Inst{Op: 0x92},
+		"ulf": Inst{Op: 0x93},
+		"clf": Inst{Op: 0x94},
+
 		"dmp": Inst{Op: 0xF0},
 		"prt": Inst{Op: 0xF1},
 		"fpr": Inst{Op: 0xF2},
