@@ -85,6 +85,7 @@ var (
 		"wrf": Inst{Op: 0x72},
 		"rdf": Inst{Op: 0x73},
 		"szf": Inst{Op: 0x74},
+		"flu": Inst{Op: 0x75},
 
 		"ban": Inst{Op: 0x80},
 		"bor": Inst{Op: 0x81},

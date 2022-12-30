@@ -41,3 +41,4 @@
 - `1.15.9`: Fix the compiler not erroring over invalid expressions
 - `1.16.9`: Support avm 1.12 (loading shared libraries)
 - `1.17.9`: Add include and emb keywords
+- `1.18.9`: Support avm 1.13 (flush instruction)
