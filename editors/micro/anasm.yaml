@@ -14,12 +14,14 @@ rules:
     - constant.string:
         start: "\""
         end:   "\""
+        skip:  "\\\\."
         rules:
-            - constant.specialChar: "\\\\[0abefnrtv\\\"\\\\]"
+            - constant.specialChar: "\\\\[\"0abefnrtv\\\\]"
 
     - constant.string:
         start: "'"
         end:   "'"
+        skip:  "\\\\."
         rules:
             - error: "..+"
             - constant.specialChar: "\\\\[0abefnrtv\\\"\\\\]"

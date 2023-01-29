@@ -1,0 +1,9 @@
+mac STDOUT = 1
+
+include "./to_include.anasm"
+
+.entry
+	psh MSG
+	psh (sizeof MSG)
+	psh STDOUT
+	wrf

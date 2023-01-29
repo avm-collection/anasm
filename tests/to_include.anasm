@@ -1,0 +1,1 @@
+let MSG char = "Hello from an included file!\n"

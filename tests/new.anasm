@@ -1,0 +1,13 @@
+mac eight_x_two = (* 8 2)
+
+let hello byte = 0 .. (+ eight_x_two 16)
+let array i64  = 5, 12, 5325
+
+.entry
+	let MSG char = "Hello, world!\n"
+	psh MSG
+	psh (sizeof MSG)
+	wrf
+
+	psh 0
+	hlt

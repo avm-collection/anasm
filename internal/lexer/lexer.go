@@ -1,6 +1,10 @@
 package lexer
 
-import "github.com/avm-collection/anasm/internal/token"
+import (
+	"strings"
+
+	"github.com/avm-collection/anasm/internal/token"
+)
 
 const EOF = '\x00'
 
@@ -8,6 +12,8 @@ type Lexer struct {
 	input string
 	pos   int
 	ch    byte
+
+	lineStart int
 
 	where token.Where
 }
@@ -47,11 +53,12 @@ func New(input, path string) *Lexer {
 
 	l.where.Row  = 1
 	l.where.Path = path
+	l.where.Line = l.getLine()
 
 	return l
 }
 
-func isWordCh(ch byte) bool {
+func isIdCh(ch byte) bool {
 	switch ch {
 	case '$', '_', '+', '-', '*', '/', '%', '>', '<', '&', '|', '^': return true
 
@@ -117,7 +124,7 @@ func (l *Lexer) NextToken() (tok token.Token) {
 			if isDecDigit(l.peek()) {
 				tok = l.lexNum()
 			} else {
-				tok = l.lexWord()
+				tok = l.lexId()
 			}
 
 		case '(':
@@ -139,18 +146,24 @@ func (l *Lexer) NextToken() (tok token.Token) {
 		default:
 			if isDecDigit(l.ch) {
 				tok = l.lexNum()
-			} else if isWordCh(l.ch) {
-				tok = l.lexWord()
+			} else if isIdCh(l.ch) {
+				tok = l.lexId()
 			} else if isWhitespace(l.ch) {
 				l.next()
 
 				continue
 			} else {
+				l.where.Len = 1
 				return token.NewError(l.where, "Unexpected character '%v'", string(l.ch))
 			}
 		}
 
 		tok.Where = start
+		if l.where.Row != start.Row {
+			tok.Where.Len = len(start.Line) - start.Col + 1
+		} else {
+			tok.Where.Len = l.where.Col - start.Col
+		}
 
 		break
 	}
@@ -351,26 +364,26 @@ func (l *Lexer) lexDec() token.Token {
 }
 
 func (l *Lexer) lexLabel() token.Token {
-	if l.next(); !isWordCh(l.ch) {
+	if l.next(); !isIdCh(l.ch) {
 		return token.NewError(l.where, "Unexpected character '%v' in label name",
 		                      string(l.ch))
 	}
 
-	return token.Token{Type: token.Label, Data: l.readWord()}
+	return token.Token{Type: token.Label, Data: l.readId()}
 }
 
-func (l *Lexer) lexWord() token.Token {
-	str := l.readWord()
+func (l *Lexer) lexId() token.Token {
+	str := l.readId()
 	type_, ok := Keywords[str]
 	if ok {
 		return token.Token{Type: type_, Data: str}
 	}
 
-	return token.Token{Type: token.Word, Data: str}
+	return token.Token{Type: token.Id, Data: str}
 }
 
-func (l *Lexer) readWord() (str string) {
-	for isWordCh(l.ch) {
+func (l *Lexer) readId() (str string) {
+	for isIdCh(l.ch) {
 		str += string(l.ch)
 
 		l.next()
@@ -396,6 +409,7 @@ func (l *Lexer) next() {
 	if l.ch == '\n' {
 		l.where.Col = 0
 		l.where.Row ++
+		l.where.Line = l.getLine()
 	} else {
 		l.where.Col ++
 	}
@@ -409,3 +423,16 @@ func (l *Lexer) peek() byte {
 	}
 }
 
+func (l *Lexer) getLine() (line string) {
+	end := strings.Index(l.input[l.lineStart:], "\n")
+
+	if end == -1 {
+		line = l.input[l.lineStart:]
+	} else {
+		line = l.input[l.lineStart:l.lineStart + end]
+	}
+
+	l.lineStart += end + 1
+
+	return
+}

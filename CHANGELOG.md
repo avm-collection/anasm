@@ -42,3 +42,4 @@
 - `1.16.9`: Support avm 1.12 (loading shared libraries)
 - `1.17.9`: Add include and emb keywords
 - `1.18.9`: Support avm 1.13 (flush instruction)
+- `1.19.9`: Support avm 1.14 (memory now starts at 0 and not 1)

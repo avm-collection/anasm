@@ -3,19 +3,24 @@ package token
 import "fmt"
 
 type Where struct {
-	Row, Col int
-	Path     string
+	Row,  Col, Len  int
+	Path, Line      string
 }
 
-func (w Where) String() string {
+func (w Where) AtRow()   int    {return w.Row}
+func (w Where) AtCol()   int    {return w.Col}
+func (w Where) GetLen()  int    {return w.Len}
+func (w Where) InFile()  string {return w.Path}
+func (w Where) GetLine() string {return w.Line}
+func (w Where) String()  string {
 	return fmt.Sprintf("%v:%v:%v", w.Path, w.Row, w.Col)
 }
 
 type Type int
 const (
-	EOF = iota
+	EOF = Type(iota)
 
-	Word
+	Id
 	Label
 	Comma
 
@@ -64,6 +69,7 @@ const (
 	count // Count of all token types
 )
 
+// TODO: Somehow make this compile-time
 func AllTokensCoveredTest() {
 	if count != 37 {
 		panic("Cover all token types")
@@ -74,7 +80,7 @@ func (t Type) String() string {
 	switch t {
 	case EOF: return "end of file"
 
-	case Word:  return "word"
+	case Id:    return "identifier"
 	case Label: return "label declaration"
 	case Comma: return ","
 
@@ -122,6 +128,30 @@ func (t Type) String() string {
 	case Error: return "error"
 
 	default: panic("Unreachable")
+	}
+}
+
+func (type_ Type) IsInt() bool {
+	switch type_ {
+	case Dec, Hex, Oct, Bin, Char: return true
+
+	default: return false
+	}
+}
+
+func (type_ Type) IsType() bool {
+	switch type_ {
+	case TypeByte, TypeChar, TypeInt16, TypeInt32, TypeInt64, TypeFloat64: return true
+
+	default: return false
+	}
+}
+
+func (type_ Type) IsBinOp() bool {
+	switch type_ {
+	case Add, Sub, Mult, Div, Mod, Pow: return true
+
+	default: return false
 	}
 }
 

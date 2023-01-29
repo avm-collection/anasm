@@ -1,641 +1,264 @@
 package compiler
 
 import (
-	"fmt"
 	"os"
-	"strconv"
-	"bytes"
 	"math"
-	"encoding/binary"
 
+	"github.com/avm-collection/anasm/pkg/errors"
+	"github.com/avm-collection/anasm/pkg/agen"
 	"github.com/avm-collection/anasm/internal/token"
-	"github.com/avm-collection/anasm/internal/lexer"
+	"github.com/avm-collection/anasm/internal/parser"
+	"github.com/avm-collection/anasm/internal/node"
 )
-
-type Word uint64
 
 const (
 	VersionMajor = 1
-	VersionMinor = 13
+	VersionMinor = 14
 	VersionPatch // Not keeping track of the patch
 )
 
+const EntryLabel = "entry"
+
+type Label struct {
+	Token token.Token
+	Addr  agen.Word
+}
+
 type Var struct {
-	Addr Word
-	Size Word
+	Token token.Token
+	Size  agen.Word
+	Addr  agen.Word
+}
+
+type Macro struct {
+	Token token.Token
+	Value agen.Word
 }
 
 type Compiler struct {
-	toks []token.Token
-	pos  Word
-	tok  token.Token
+	a       *agen.AGEN
+	program *node.Statements
 
-	programSize, memorySize, entryPoint Word
-
-	labels map[string]Word
+	labels map[string]Label
 	vars   map[string]Var
-	macros map[string]Word
-
-	memory  bytes.Buffer
-	program bytes.Buffer
+	macros map[string]Macro
 
 	input, path string
-
-	l *lexer.Lexer
-
-	errs []error
-	maxE int
 }
 
 func New(input, path string) *Compiler {
-	return &Compiler{input: input, path: path,
-	                 labels: make(map[string]Word),
-	                 vars:   make(map[string]Var),
-	                 macros: make(map[string]Word)}
-}
-
-func fileWriteWord(f *os.File, word Word) error {
-	var buf bytes.Buffer
-	binary.Write(&buf, binary.BigEndian, word)
-
-	_, err := f.Write(buf.Bytes())
-
-	return err
-}
-
-func (c *Compiler) errorAt(where token.Where, format string, args... interface{}) error {
-	return fmt.Errorf("Error at %v: %v", where, fmt.Sprintf(format, args...))
-}
-
-func (c *Compiler) errorHere(format string, args... interface{}) error {
-	return c.errorAt(c.tok.Where, fmt.Sprintf(format, args...))
-}
-
-func (c *Compiler) isTokInst(tok token.Token) bool {
-	_, ok := Insts[tok.Data]
-	return ok
-}
-
-func (c *Compiler) isTokVar(tok token.Token) bool {
-	_, ok := c.vars[tok.Data]
-	return ok
-}
-
-func (c *Compiler) isTokLabel(tok token.Token) bool {
-	_, ok := c.labels[tok.Data]
-	return ok
-}
-
-func (c *Compiler) isTokMacro(tok token.Token) bool {
-	_, ok := c.macros[tok.Data]
-	return ok
-}
-
-func (c *Compiler) isTokExprStart(tok token.Token) bool {
-	switch tok.Type {
-	case token.Dec,  token.Hex,  token.Oct,   token.LParen,
-	     token.Bin,  token.Char, token.Float, token.RParen: return true
-
-	case token.Word: return !c.isTokInst(tok)
-
-	default: return false
+	return &Compiler{
+		a: agen.New(), input: input, path: path,
+		labels: make(map[string]Label),
+		vars:   make(map[string]Var),
+		macros: make(map[string]Macro),
 	}
 }
 
-func (c *Compiler) isArithIntrinsic(tok token.Token) bool {
-	switch tok.Type {
-	case token.Add,    token.Sub,   token.Mult,      token.Div,      token.Mod,
-	     token.BitAnd, token.BitOr, token.BitSRight, token.BitSLeft, token.Pow: return true
-
-	default: return false
-	}
-}
-
-func (c *Compiler) writeInst(op byte, data Word) {
-	binary.Write(&c.program, binary.BigEndian, op)
-	binary.Write(&c.program, binary.BigEndian, data)
-}
-
-func (c *Compiler) CompileToBinary(path string, executable bool, maxE int) []error {
-	c.maxE = maxE
-
-	if !c.preproc(c.input, c.path) {
-		return c.errs
+func (c *Compiler) Compile() bool {
+	p := parser.New(c.input, c.path)
+	if c.program = p.Parse(); errors.Happened() {
+		return false
 	}
 
-	// Add the EOF token
-	c.toks = append(c.toks, c.tok)
-
-	c.programSize = c.pos // Program size (in instructions)
-
-	c.compile()
-
-	entry, ok := c.labels["entry"]
-	if !ok {
-		c.errs = append(c.errs, fmt.Errorf("Error: Program entry point label 'entry' not found"))
-	}
-	c.entryPoint = Word(entry)
-
-	if len(c.errs) > 0 {
-		if len(c.errs) > c.maxE {
-			c.errs = c.errs[:c.maxE]
-			c.errs = append(c.errs, fmt.Errorf("..."))
-		}
-
-		return c.errs
+	if c.preproc(); errors.Happened() {
+		return false
 	}
 
-	f, err := os.Create(path)
-	if err != nil {
-		return []error{fmt.Errorf("Error: %v", err.Error())}
-	}
-	defer f.Close()
-
-	if executable {
-		// Shebang
-		f.Write([]byte("#!/usr/bin/avm\n"))
-
-		os.Chmod(path, 0777)
+	if c.compile(); errors.Happened() {
+		return false
 	}
 
-	// Metadata
-	f.Write([]byte{'A', 'V', 'M'})
-	f.Write([]byte{VersionMajor, VersionMinor, VersionPatch})
-
-	fileWriteWord(f, c.programSize)
-	fileWriteWord(f, c.memorySize)
-	fileWriteWord(f, c.entryPoint)
-
-	// Memory
-	_, err = f.Write(c.memory.Bytes())
-	if err != nil {
-		return []error{fmt.Errorf("Error: %v", err.Error())}
-	}
-
-	// Program
-	_, err = f.Write(c.program.Bytes())
-	if err != nil {
-		return []error{fmt.Errorf("Error: %v", err.Error())}
-	}
-
-	return []error{}
-}
-
-func (c *Compiler) compile() {
-	c.pos = 0
-	c.tok = c.toks[c.pos]
-
-	for c.tok.Type != token.EOF {
-		switch c.toks[c.pos].Type {
-		case token.Word:
-			if err := c.compileInst(); err != nil {
-				c.errs = append(c.errs, err)
-				c.next()
-			}
-
-		case token.Let:
-			if err := c.compileLet(); err != nil {
-				c.errs = append(c.errs, err)
-				c.next()
-			}
-
-		case token.Embed:
-			if err := c.compileEmbed(); err != nil {
-				c.errs = append(c.errs, err)
-				c.next()
-			}
-
-		case token.Macro:
-			if err := c.compileMacro(); err != nil {
-				c.errs = append(c.errs, err)
-				c.next()
-			}
-
-		default:
-			c.errs = append(c.errs, c.errorHere("Unexpected %v", c.tok))
-			c.next()
-		}
-
-		if len(c.errs) >= c.maxE {
-			return
-		}
-	}
-}
-
-func intDataToWord(data string, base int) Word {
-	word, err := strconv.ParseInt(data, base, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	return Word(word)
-}
-
-func charDataToWord(data string) Word {
-	if len(data) > 1 {
-		panic("len(data) > 1")
-	}
-
-	return Word(data[0])
-}
-
-func floatDataToWord(data string) Word {
-	word, err := strconv.ParseFloat(data, 8)
-	if err != nil {
-		panic(err)
-	}
-
-	return Word(math.Float64bits(word))
-}
-
-func (c *Compiler) evalExpr() (data Word, err error) {
-	switch c.tok.Type {
-	case token.Dec:   data = intDataToWord(c.tok.Data, 10)
-	case token.Hex:   data = intDataToWord(c.tok.Data, 16)
-	case token.Oct:   data = intDataToWord(c.tok.Data, 8)
-	case token.Bin:   data = intDataToWord(c.tok.Data, 2)
-	case token.Char:  data = charDataToWord(c.tok.Data)
-	case token.Float: data = floatDataToWord(c.tok.Data)
-
-	case token.LParen: data, err = c.evalParen()
-
-	case token.Word:
-		if c.isTokInst(c.tok) {
-			return 0, c.errorHere("Unexpected instruction '%v'", c.tok.Data)
-		}
-
-		switch {
-		case c.isTokMacro(c.tok): data = c.macros[c.tok.Data]
-		case c.isTokLabel(c.tok): data = c.labels[c.tok.Data]
-		case c.isTokVar(c.tok):   data = c.vars[c.tok.Data].Addr
-
-		default: return 0, c.errorHere("Undefined identifier '%v'", c.tok.Data)
-		}
-
-	default: return 0, c.errorHere("Unexpected %v", c.tok)
-	}
-
-	return
-}
-
-func (c *Compiler) evalParen() (Word, error) {
-	c.next()
-	switch c.tok.Type {
-	case token.SizeOf: return c.evalSizeOf()
-
-	default:
-		if c.isArithIntrinsic(c.tok) {
-			return c.evalArith()
-		} else {
-			return 0, c.errorHere("Expected intrinsic name, got %v", c.tok)
-		}
-	}
-}
-
-var typeToSize = map[token.Type]int{
-	token.TypeByte:    1,
-	token.TypeChar:    1,
-	token.TypeInt16:   2,
-	token.TypeInt32:   4,
-	token.TypeInt64:   8,
-	token.TypeFloat64: 8,
-}
-
-func (c *Compiler) evalSizeOf() (size Word, err error) {
-	c.next()
-	if c.tok.Type == token.Word {
-		switch {
-		case c.isTokVar(c.tok): size = c.vars[c.tok.Data].Size
-		case c.isTokLabel(c.tok):
-			return 0, c.errorHere("Expected a variable identifier, got label '%v'", c.tok.Data)
-		case c.isTokMacro(c.tok):
-			return 0, c.errorHere("Expected a variable identifier, got macro '%v'", c.tok.Data)
-
-		default: return 0, c.errorHere("Undefined identifier '%v'", c.tok.Data)
-		}
-	} else {
-		typeSize, ok := typeToSize[c.tok.Type]
-		if !ok {
-			return 0, c.errorHere("Expected a type, got %v", c.tok)
-		}
-
-		size = Word(typeSize)
-	}
-
-	if c.next(); c.tok.Type != token.RParen {
-		return 0, c.errorHere("Expected matching ')', got %v", c.tok)
-	}
-
-	return
-}
-
-func (c *Compiler) evalArith() (res Word, err error) {
-	instrinsic := c.tok
-	firstArg   := true
-
-	for c.next(); c.tok.Type != token.RParen; c.next() {
-		if c.tok.Type == token.EOF {
-			return 0, c.errorHere("Expected matching ')', got %v", c.tok)
-		}
-
-		data, err := c.evalExpr()
-		if err != nil {
-			return 0, err
-		}
-
-		if firstArg {
-			res      = data
-			firstArg = false
-		} else {
-			switch instrinsic.Type {
-			case token.Add:  res += data
-			case token.Sub:  res -= data
-			case token.Mult: res *= data
-			case token.Div:  res /= data
-			case token.Mod:  res %= data
-			case token.Pow:  res  = Word(math.Pow(float64(res), float64(data)))
-
-			case token.BitAnd:    res &=  data
-			case token.BitOr:     res |=  data
-			case token.BitSRight: res >>= data
-			case token.BitSLeft:  res <<= data
-
-			default: panic("Unknown intrinsic.Type")
-			}
-		}
-	}
-
-	return
-}
-
-func (c *Compiler) compileInst() error {
-	tok      := c.tok
-	inst, ok := Insts[tok.Data]
-	if !ok {
-		return c.errorHere("Unknown instruction '%v'", tok.Data)
-	}
-
-	c.next()
-	if inst.HasArg {
-		if !c.isTokExprStart(c.tok) {
-			return c.errorHere("Instruction '%v' expected a parameter, got %v", tok.Data, c.tok)
-		}
-
-		data, err := c.evalExpr()
-		if err != nil {
-			return err
-		}
-		c.next()
-
-		c.writeInst(inst.Op, data)
-	} else {
-		if c.isTokExprStart(c.tok) {
-			return c.errorHere("Instruction '%v' expects no parameters, got %v", tok.Data, c.tok)
-		}
-
-		c.writeInst(inst.Op, 0)
-	}
-
-	return nil
-}
-
-func (c *Compiler) idExists(tok token.Token) error {
-	switch {
-	case c.isTokInst(tok):  return c.errorAt(tok.Where, "Expected identifier, got instruction '%v'",
-	                                         tok.Data)
-	case c.isTokLabel(tok): return c.errorAt(tok.Where, "Identifier '%v' redefined " +
-	                                         "(previously a label)", tok.Data)
-	case c.isTokMacro(tok): return c.errorAt(tok.Where, "Identifier '%v' redefined " +
-	                                         "(previously a macro)", tok.Data)
-	case c.isTokVar(tok):   return c.errorAt(tok.Where, "Identifier '%v' redefined " +
-	                                         "(previously a variable)", tok.Data)
-
-	default: return nil
-	}
-}
-
-func (c *Compiler) compileMacro() error {
-	if c.next(); c.tok.Type != token.Word {
-		return c.errorHere("Expected macro identifier, got %v", c.tok)
-	}
-
-	id := c.tok
-	if err := c.idExists(id); err != nil {
-		return err
-	}
-
-	if c.next(); c.tok.Type != token.Equals {
-		return c.errorHere("Expected macro assignment with '=', got %v", c.tok)
-	}
-	c.next()
-
-	if !c.isTokExprStart(c.tok) {
-		return c.errorHere("Expected macro value expression, got %v", c.tok)
-	}
-
-	data, err := c.evalExpr()
-	if err != nil {
-		return err
-	}
-	c.next()
-
-	c.macros[id.Data] = data
-
-	return nil
-}
-
-func (c *Compiler) writeMemory(data Word, size int) error {
-	switch size {
-	case 1: binary.Write(&c.memory, binary.BigEndian, uint8(data))
-	case 2: binary.Write(&c.memory, binary.BigEndian, uint16(data))
-	case 4: binary.Write(&c.memory, binary.BigEndian, uint32(data))
-	case 8: binary.Write(&c.memory, binary.BigEndian, data)
-
-	default: return fmt.Errorf("Got incorrect data element size %v", size)
-	}
-
-	c.memorySize += Word(size)
-
-	return nil
-}
-
-func (c *Compiler) compileLet() error {
-	if c.next(); c.tok.Type != token.Word {
-		return c.errorHere("Expected variable identifier, got %v", c.tok)
-	}
-
-	id := c.tok
-	if err := c.idExists(id); err != nil {
-		return err
-	}
-
-	c.next()
-	size, ok := typeToSize[c.tok.Type]
-	if !ok {
-		return c.errorHere("Expected a type, got %v", c.tok)
-	}
-
-	if c.next(); c.tok.Type != token.Equals {
-		return c.errorHere("Expected variable assignment with '=', got %v", c.tok)
-	}
-	c.next()
-
-	addr      := c.memorySize + 1
-	startSize := c.memorySize
-
-	for {
-		if c.tok.Type == token.String {
-			c.writeString(c.tok.Data, size)
-
-			if c.next(); c.tok.Type == token.Dots {
-				return c.errorHere("Unexpected '%v' after string (cannot fill with a string)",
-				                   token.Dots)
-			}
-		} else {
-			data, err := c.evalExpr()
-			if err != nil {
-				return err
-			}
-
-			if c.next(); c.tok.Type == token.Dots {
-				c.next()
-
-				count, err := c.evalExpr()
-				if err != nil {
-					return err
-				}
-
-				for i := Word(0); i < count; i ++ {
-					c.writeMemory(data, size)
-				}
-
-				c.next()
-			} else {
-				c.writeMemory(data, size)
-			}
-		}
-
-		if c.tok.Type == token.Comma {
-			c.next()
-		} else {
-			break
-		}
-	}
-
-	c.vars[id.Data] = Var{Addr: addr, Size: c.memorySize - startSize}
-
-	return nil
-}
-
-func (c *Compiler) compileEmbed() error {
-	if c.next(); c.tok.Type != token.Word {
-		return c.errorHere("Expected file identifier, got %v", c.tok)
-	}
-
-	id := c.tok
-	if err := c.idExists(id); err != nil {
-		return err
-	}
-
-	if c.next(); c.tok.Type != token.String {
-		return c.errorHere("Expected file path, got %v", c.tok)
-	}
-
-	data, err := os.ReadFile(c.tok.Data)
-	if err != nil {
-		return c.errorHere("Could not embed file '%v'", c.tok.Data)
-	}
-	c.next()
-
-	addr      := c.memorySize + 1
-	startSize := c.memorySize
-
-	for _, byte_ := range data {
-		c.writeMemory(Word(byte_), 1)
-	}
-
-	c.vars[id.Data] = Var{Addr: addr, Size: c.memorySize - startSize}
-
-	return nil
-}
-
-func (c *Compiler) writeString(data string, charSize int) error {
-	for _, ch := range data {
-		if err := c.writeMemory(Word(ch), charSize); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (c *Compiler) next() {
-	if c.tok.Type == token.EOF {
-		return
-	}
-
-	c.pos ++
-	c.tok = c.toks[c.pos]
-}
-
-func (c *Compiler) preproc(input, path string) bool {
-	l := lexer.New(input, path)
-
-	for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-		// Eat and evaluate the preprocessor, leave out the other tokens
-		switch tok.Type {
-		case token.Error:
-			c.errs = append(c.errs, c.errorAt(tok.Where, tok.Data))
-			return false
-
-		case token.Word:
-			if c.isTokInst(tok) {
-				c.pos ++
-			}
-
-		case token.Label:
-			id := tok
-			if err := c.idExists(id); err != nil {
-				c.errs = append(c.errs, err)
-			}
-
-			c.labels[id.Data] = c.pos
-
-			continue
-
-		case token.Include:
-			tok = l.NextToken()
-			if tok.Type == token.Error {
-				c.errs = append(c.errs, c.errorAt(tok.Where, tok.Data))
-				return false
-			}
-
-			if tok.Type != token.String {
-				c.errs = append(c.errs, c.errorAt(tok.Where, "'include' expected string, got %v",
-				                                  tok))
-				continue
-			}
-
-			data, err := os.ReadFile(tok.Data)
-			if err != nil {
-				c.errs = append(c.errs, c.errorAt(tok.Where, "Could not include file '%v'",
-				                                  tok.Data))
-				continue
-			}
-
-			if !c.preproc(string(data), tok.Data) {
-				return false
-			}
-
-			continue
-		}
-
-		if len(c.errs) > c.maxE {
-			return false
-		}
-
-		c.toks = append(c.toks, tok)
+	if _, ok := c.labels[EntryLabel]; !ok {
+		errors.Simple("Program entry point label '%v' not found", EntryLabel)
+		return false
 	}
 
 	return true
+}
+
+func (c *Compiler) CreateExec(path string, executable bool) error {
+	return c.a.CreateExecAVM(path, executable)
+}
+
+func (c *Compiler) preproc() {
+	var addr agen.Word
+	for _, s := range c.program.List {
+		switch n := s.(type) {
+		case *node.Label:
+			if c.redefined(n.Name) {
+				break
+			}
+
+			c.labels[n.Name.Value] = Label{Token: n.Token, Addr: addr}
+			if n.Name.Value == EntryLabel {
+				c.a.SetEntry(addr)
+			}
+
+		case *node.Inst: addr ++
+		default:
+		}
+	}
+}
+
+func (c *Compiler) compile() {
+	for _, s := range c.program.List {
+		switch n := s.(type) {
+		case *node.Label: continue;
+
+		case *node.Macro: c.compileMacro(n)
+		case *node.Embed: c.compileEmbed(n)
+		case *node.Let:   c.compileLet(n)
+		case *node.Inst:  c.compileInst(n)
+		}
+	}
+}
+
+func (c *Compiler) redefined(name *node.Id) bool {
+	if prev, ok := c.labels[name.Value]; ok {
+		errors.Error(name.Token.Where, "Label '%v' redefined", name.Value)
+		errors.Note(prev.Token.Where, "Previously defined here")
+		return true
+	} else if prev, ok := c.vars[name.Value]; ok {
+		errors.Error(name.Token.Where, "Variable '%v' redefined", name.Value)
+		errors.Note(prev.Token.Where, "Previously defined here")
+		return true
+	} else if prev, ok := c.macros[name.Value]; ok {
+		errors.Error(name.Token.Where, "Macro '%v' redefined", name.Value)
+		errors.Note(prev.Token.Where, "Previously defined here")
+		return true
+	}
+
+	return false
+}
+
+func (c *Compiler) compileMacro(n *node.Macro) {
+	if c.redefined(n.Name) {
+		return
+	}
+
+	c.macros[n.Name.Value] = Macro{Token: n.Token, Value: c.evalExpr(n.Value)}
+}
+
+func (c *Compiler) compileEmbed(n *node.Embed) {
+	if c.redefined(n.Name) {
+		return
+	}
+
+	data, err := os.ReadFile(n.Path.Value)
+	if err != nil {
+		errors.Error(n.Token.Where, "Could not embed file '%v'", n.Path.Value)
+		return
+	}
+
+	size := c.a.MemorySize()
+	addr := c.a.AddMemoryString(string(data))
+	size  = c.a.MemorySize() - size
+
+	c.vars[n.Name.Value] = Var{Token: n.Token, Addr: addr, Size: size}
+}
+
+func (c *Compiler) compileLet(n *node.Let) {
+	if c.redefined(n.Name) {
+		return
+	}
+
+	list := []agen.Word{}
+	for _, expr := range n.Values {
+		switch e := expr.(type) {
+		case *node.Fill:
+			count := c.evalExpr(e.Count)
+			value := c.evalExpr(e.Value)
+			for i := agen.Word(0); i < count; i ++ {
+				list = append(list, value)
+			}
+
+		case *node.String:
+			for _, ch := range e.Value {
+				list = append(list, agen.Word(ch))
+			}
+
+		default: list = append(list, c.evalExpr(expr))
+		}
+	}
+
+	size := c.a.MemorySize()
+	addr := c.a.AddMemoryInt(list, n.Type.Type)
+	size  = c.a.MemorySize() - size
+
+	c.vars[n.Name.Value] = Var{Token: n.Token, Addr: addr, Size: size}
+}
+
+func (c *Compiler) compileInst(n *node.Inst) {
+	if n.Arg == nil {
+		c.a.AddInst(n.Name)
+	} else {
+		c.a.AddInstWith(n.Name, c.evalExpr(n.Arg))
+	}
+}
+
+func (c *Compiler) evalExpr(e node.Expr) agen.Word {
+	switch n := e.(type) {
+	case *node.Int:   return agen.Word(n.Value)
+	case *node.Float: return agen.Word(math.Float64bits(n.Value))
+	case *node.Id:
+		if label, ok := c.labels[n.Value]; ok {
+			return label.Addr
+		} else if var_, ok := c.vars[n.Value]; ok {
+			return var_.Addr
+		} else if macro, ok := c.macros[n.Value]; ok {
+			return macro.Value
+		}
+
+	case *node.BinOp:  return c.evalBinOp(n)
+	case *node.SizeOf: return c.evalSizeOf(n)
+
+	case *node.Type:   errors.Error(n.Token.Where, "Unexpected type in constant expression")
+	case *node.String: errors.Error(n.Token.Where, "Unexpected string in constant expression")
+	case *node.Fill:   errors.Error(n.Token.Where, "Unexpected fill in constant expression")
+	default: errors.Error(n.GetToken().Where, "Unexpected %v in constant expression", n.GetToken())
+	}
+
+	return 0;
+}
+
+func (c *Compiler) evalSizeOf(n *node.SizeOf) agen.Word {
+	if n.Id == nil {
+		switch n.Type.Type {
+		case agen.I8:  return 1
+		case agen.I16: return 2
+		case agen.I32: return 4
+		case agen.I64: return 8
+		}
+	} else {
+		if _, ok := c.labels[n.Id.Value]; ok {
+			errors.Error(n.Token.Where, "Cannot get size of label '%v'", n.Id.Value)
+		} else if var_, ok := c.vars[n.Id.Value]; ok {
+			return var_.Size
+		} else if _, ok := c.macros[n.Id.Value]; ok {
+			errors.Error(n.Token.Where, "Cannot get size of macro '%v'", n.Id.Value)
+		}
+	}
+
+	return 0
+}
+
+func (c *Compiler) evalBinOp(n *node.BinOp) agen.Word {
+	result := c.evalExpr(n.Args[0])
+	for i, expr := range n.Args {
+		if i == 0 {
+			continue
+		}
+
+		switch n.Op {
+		case "+": result += c.evalExpr(expr)
+		case "-": result -= c.evalExpr(expr)
+		case "*": result *= c.evalExpr(expr)
+		case "/": result /= c.evalExpr(expr)
+		case "%": result %= c.evalExpr(expr)
+		case "^": result  = agen.Word(math.Pow(float64(result), float64(c.evalExpr(expr))))
+		}
+	}
+
+	return result
 }

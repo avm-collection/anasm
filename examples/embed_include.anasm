@@ -1,4 +1,4 @@
-include "./examples/std.anasm"
+include "./std.anasm"
 
 emb INFO "./a.txt"
 
