@@ -70,7 +70,7 @@ func (c *Compiler) Compile() bool {
 	}
 
 	if _, ok := c.labels[EntryLabel]; !ok {
-		errors.Simple("Program entry point label '%v' not found", EntryLabel)
+		errors.SimpleError("Program entry point label '%v' not found", EntryLabel)
 		return false
 	}
 

@@ -105,11 +105,24 @@ func Error(where Where, format string, any... interface{}) {
 	printNice(newData(where, fmt.Sprintf(format, any...), typeError()))
 }
 
-func Simple(format string, any... interface{}) {
-	newError()
+func simple(type_ typeData, msg string) {
 	separator()
+	fmt.Fprintf(os.Stderr, "%v%v:\x1b[0m %v\n", type_.attr, type_.name, msg)
+}
 
-	fmt.Fprintf(os.Stderr, "\x1b[1;91mError:\x1b[0m %v\n", fmt.Sprintf(format, any...))
+func SimpleError(format string, any... interface{}) {
+	newError()
+	simple(typeError(), fmt.Sprintf(format, any...))
+}
+
+func SimpleWarning(format string, any... interface{}) {
+	newError()
+	simple(typeWarning(), fmt.Sprintf(format, any...))
+}
+
+func SimpleNote(format string, any... interface{}) {
+	newError()
+	simple(typeNote(), fmt.Sprintf(format, any...))
 }
 
 func Warning(where Where, format string, any... interface{}) {

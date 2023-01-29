@@ -1,8 +1,5 @@
 package disasm
 
-// TODO: Make the disassembler smarter, use labels instead of literal addresses, detect strings
-//       in memory...
-
 import (
 	"fmt"
 	"os"
@@ -10,12 +7,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/avm-collection/anasm/internal/compiler"
-)
-
-const (
-	InstSize = 9
-	WordSize = 8
+	"github.com/avm-collection/anasm/internal/agen"
 )
 
 type Disassembler struct {
@@ -23,9 +15,9 @@ type Disassembler struct {
 	path  string
 	pos   int
 
-	programSize compiler.Word
-	memorySize  compiler.Word
-	entryPoint  compiler.Word
+	programSize agen.Word
+	memorySize  agen.Word
+	entryPoint  agen.Word
 
 	out string
 

@@ -1,8 +1,8 @@
 mac STDOUT   = 1
 let MSG char = "Hello, world!\n"
 
-.entry                 # Program entry point
-	psh MSG            # Text to output
-	psh (sizeof MSG)   # MSG length
-	psh STDOUT         # Write to file stdout
-	wrf                # Write
+.entry             # Program entry point
+	MSG            # Text to output, lonely expressions are implicit push instructions
+	(sizeof MSG)   # MSG length
+	STDOUT         # Write to file stdout
+	wrf            # Write

@@ -179,9 +179,7 @@ func (p *Parser) parseInst() *node.Inst {
 
 	inst, ok := agen.Insts[p.tok.Data]
 	if !ok {
-		errors.Error(p.tok.Where, "'%v' is not a valid instruction", p.tok.Data)
-		p.next()
-		return nil
+		return p.parseImplicitPush()
 	}
 	n.Name = p.tok.Data
 
