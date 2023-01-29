@@ -11,12 +11,6 @@ import (
 	"github.com/avm-collection/anasm/internal/node"
 )
 
-const (
-	VersionMajor = 1
-	VersionMinor = 14
-	VersionPatch // Not keeping track of the patch
-)
-
 const EntryLabel = "entry"
 
 type Label struct {

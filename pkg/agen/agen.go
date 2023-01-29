@@ -8,7 +8,7 @@ import (
 
 const (
 	VersionMajor = 1
-	VersionMinor = 13
+	VersionMinor = 14
 	VersionPatch // Not keeping track of the patch
 )
 
@@ -128,7 +128,8 @@ var (
 	}
 )
 
-type Word uint64
+type  Word uint64
+const WordSize = 8
 
 func (w Word) WriteIntoFile(f *os.File) error {
 	var buf bytes.Buffer

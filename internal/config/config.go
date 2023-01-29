@@ -6,5 +6,5 @@ const (
 
 	VersionMajor = 1
 	VersionMinor = 20
-	VersionPatch = 9
+	VersionPatch = 10
 )

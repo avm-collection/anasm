@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/avm-collection/anasm/pkg/errors"
 	"github.com/avm-collection/anasm/internal/config"
 	"github.com/avm-collection/anasm/internal/token"
 	"github.com/avm-collection/anasm/internal/compiler"
-//	"github.com/avm-collection/anasm/internal/disasm"
+	"github.com/avm-collection/anasm/internal/disasm"
 )
 
 var (
@@ -93,7 +94,7 @@ func assemble(input, path string) {
 	}
 }
 
-/*func disassemble(input []byte, path string) {
+func disassemble(input []byte, path string) {
 	if len(*out) == 0 {
 		if filepath.Ext(path) == ".anasm" {
 			*out = path + ".out"
@@ -105,11 +106,8 @@ func assemble(input, path string) {
 	}
 
 	d := disasm.New(input, path)
-
-	if err := d.Disassemble(*out, *noW); err != nil {
-		printError(err.Error())
-	}
-}*/
+	d.Disassemble(*out)
+}
 
 func main() {
 	if *v {
@@ -130,6 +128,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	errors.NoWarnings(!*noW)
+
 	path      := args[0]
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -140,7 +140,7 @@ func main() {
 	}
 
 	if *d {
-		//disassemble(data, path)
+		disassemble(data, path)
 	} else {
 		assemble(string(data), path)
 	}

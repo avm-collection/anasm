@@ -20,6 +20,7 @@ var (
 	count = 0
 
 	first = true
+	noW   = false
 )
 
 type typeData struct {
@@ -116,6 +117,10 @@ func SimpleError(format string, any... interface{}) {
 }
 
 func SimpleWarning(format string, any... interface{}) {
+	if noW {
+		return
+	}
+
 	newError()
 	simple(typeWarning(), fmt.Sprintf(format, any...))
 }
@@ -126,6 +131,10 @@ func SimpleNote(format string, any... interface{}) {
 }
 
 func Warning(where Where, format string, any... interface{}) {
+	if noW {
+		return
+	}
+
 	printNice(newData(where, fmt.Sprintf(format, any...), typeWarning()))
 }
 
@@ -135,6 +144,10 @@ func Note(where Where, format string, any... interface{}) {
 
 func Happened() bool {
 	return count > 0
+}
+
+func NoWarnings(noW_ bool) {
+	noW = noW_
 }
 
 func Reset() {
