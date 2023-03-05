@@ -115,7 +115,7 @@ func InstFromOp(op byte) (string, bool, error) {
 		}
 	}
 
-	return "", false, fmt.Errorf("Unknown instruction with opcode %i", op)
+	return "", false, fmt.Errorf("Unknown instruction with opcode %v", op)
 }
 
 func (d *Disassembler) Disassemble(path string) bool {
@@ -202,7 +202,7 @@ func (d *Disassembler) readInsts() {
 
 		name, hasArg, err := InstFromOp(bytes[0])
 		if err != nil {
-			errors.SimpleError("Unknown instruction in '%v' at %v", d.path, i)
+			errors.SimpleError("At %v: %v", i, err.Error())
 		}
 
 		data := agen.Word(binary.BigEndian.Uint64(bytes[1:]))

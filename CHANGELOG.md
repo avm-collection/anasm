@@ -45,3 +45,4 @@
 - `1.19.9`:  Support avm 1.14 (memory now starts at 0 and not 1)
 - `1.20.9`:  Implicit pushes
 - `1.20.10`: Fix the disassembler
+- `1.20.11`: Fix disassembler errors
