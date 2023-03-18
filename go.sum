@@ -1,0 +1,4 @@
+github.com/avm-collection/agen v0.0.0-20230318192103-56f03e9e2a2a h1:fGC2ZkYGrXu9SKk2GqahHRIGemJN/ZxEH5/rrFOGjL8=
+github.com/avm-collection/agen v0.0.0-20230318192103-56f03e9e2a2a/go.mod h1:SrERRAHxBOnz9nduq0ZpHY6FWP0Vtm0waOSkWAtP4t8=
+github.com/avm-collection/goerror v0.0.0-20230318192050-9b87b770297d h1:JKQmov+NdGFaE37VVUlMrWyn+NDIrvUOTpHtktj2laY=
+github.com/avm-collection/goerror v0.0.0-20230318192050-9b87b770297d/go.mod h1:ptjWvdZPbrTETpu1vOeRpTe19+ptohlw2neE6HTNtrQ=

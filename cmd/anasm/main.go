@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/avm-collection/anasm/pkg/errors"
+	"github.com/avm-collection/goerror"
+
 	"github.com/avm-collection/anasm/internal/config"
 	"github.com/avm-collection/anasm/internal/token"
 	"github.com/avm-collection/anasm/internal/compiler"
@@ -128,7 +129,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	errors.NoWarnings(!*noW)
+	goerror.NoWarnings(!*noW)
 
 	path      := args[0]
 	data, err := os.ReadFile(path)

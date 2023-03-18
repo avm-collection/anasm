@@ -5,6 +5,6 @@ const (
 	GithubLink = "https://github.com/avm-collection/anasm"
 
 	VersionMajor = 1
-	VersionMinor = 20
+	VersionMinor = 21
 	VersionPatch = 11
 )

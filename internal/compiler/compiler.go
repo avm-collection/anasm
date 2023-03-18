@@ -4,8 +4,9 @@ import (
 	"os"
 	"math"
 
-	"github.com/avm-collection/anasm/pkg/errors"
-	"github.com/avm-collection/anasm/pkg/agen"
+	"github.com/avm-collection/goerror"
+	"github.com/avm-collection/agen"
+
 	"github.com/avm-collection/anasm/internal/token"
 	"github.com/avm-collection/anasm/internal/parser"
 	"github.com/avm-collection/anasm/internal/node"
@@ -51,20 +52,20 @@ func New(input, path string) *Compiler {
 
 func (c *Compiler) Compile() bool {
 	p := parser.New(c.input, c.path)
-	if c.program = p.Parse(); errors.Happened() {
+	if c.program = p.Parse(); goerror.Happened() {
 		return false
 	}
 
-	if c.preproc(); errors.Happened() {
+	if c.preproc(); goerror.Happened() {
 		return false
 	}
 
-	if c.compile(); errors.Happened() {
+	if c.compile(); goerror.Happened() {
 		return false
 	}
 
 	if _, ok := c.labels[EntryLabel]; !ok {
-		errors.SimpleError("Program entry point label '%v' not found", EntryLabel)
+		goerror.SimpleError("Program entry point label '%v' not found", EntryLabel)
 		return false
 	}
 
@@ -110,16 +111,16 @@ func (c *Compiler) compile() {
 
 func (c *Compiler) redefined(name *node.Id) bool {
 	if prev, ok := c.labels[name.Value]; ok {
-		errors.Error(name.Token.Where, "Label '%v' redefined", name.Value)
-		errors.Note(prev.Token.Where, "Previously defined here")
+		goerror.Error(name.Token.Where, "Label '%v' redefined", name.Value)
+		goerror.Note(prev.Token.Where, "Previously defined here")
 		return true
 	} else if prev, ok := c.vars[name.Value]; ok {
-		errors.Error(name.Token.Where, "Variable '%v' redefined", name.Value)
-		errors.Note(prev.Token.Where, "Previously defined here")
+		goerror.Error(name.Token.Where, "Variable '%v' redefined", name.Value)
+		goerror.Note(prev.Token.Where, "Previously defined here")
 		return true
 	} else if prev, ok := c.macros[name.Value]; ok {
-		errors.Error(name.Token.Where, "Macro '%v' redefined", name.Value)
-		errors.Note(prev.Token.Where, "Previously defined here")
+		goerror.Error(name.Token.Where, "Macro '%v' redefined", name.Value)
+		goerror.Note(prev.Token.Where, "Previously defined here")
 		return true
 	}
 
@@ -141,7 +142,7 @@ func (c *Compiler) compileEmbed(n *node.Embed) {
 
 	data, err := os.ReadFile(n.Path.Value)
 	if err != nil {
-		errors.Error(n.Token.Where, "Could not embed file '%v'", n.Path.Value)
+		goerror.Error(n.Token.Where, "Could not embed file '%v'", n.Path.Value)
 		return
 	}
 
@@ -202,15 +203,17 @@ func (c *Compiler) evalExpr(e node.Expr) agen.Word {
 			return var_.Addr
 		} else if macro, ok := c.macros[n.Value]; ok {
 			return macro.Value
+		} else {
+			goerror.Error(n.Token.Where, "Undefined identifier '%v'", n.Value)
 		}
 
 	case *node.BinOp:  return c.evalBinOp(n)
 	case *node.SizeOf: return c.evalSizeOf(n)
 
-	case *node.Type:   errors.Error(n.Token.Where, "Unexpected type in constant expression")
-	case *node.String: errors.Error(n.Token.Where, "Unexpected string in constant expression")
-	case *node.Fill:   errors.Error(n.Token.Where, "Unexpected fill in constant expression")
-	default: errors.Error(n.GetToken().Where, "Unexpected %v in constant expression", n.GetToken())
+	case *node.Type:   goerror.Error(n.Token.Where, "Unexpected type in constant expression")
+	case *node.String: goerror.Error(n.Token.Where, "Unexpected string in constant expression")
+	case *node.Fill:   goerror.Error(n.Token.Where, "Unexpected fill in constant expression")
+	default: goerror.Error(n.GetToken().Where, "Unexpected %v in constant expression", n.GetToken())
 	}
 
 	return 0;
@@ -226,11 +229,13 @@ func (c *Compiler) evalSizeOf(n *node.SizeOf) agen.Word {
 		}
 	} else {
 		if _, ok := c.labels[n.Id.Value]; ok {
-			errors.Error(n.Token.Where, "Cannot get size of label '%v'", n.Id.Value)
+			goerror.Error(n.Token.Where, "Cannot get size of label '%v'", n.Id.Value)
 		} else if var_, ok := c.vars[n.Id.Value]; ok {
 			return var_.Size
 		} else if _, ok := c.macros[n.Id.Value]; ok {
-			errors.Error(n.Token.Where, "Cannot get size of macro '%v'", n.Id.Value)
+			goerror.Error(n.Token.Where, "Cannot get size of macro '%v'", n.Id.Value)
+		} else {
+			goerror.Error(n.Token.Where, "Undefined identifier '%v'", n.Id.Value)
 		}
 	}
 

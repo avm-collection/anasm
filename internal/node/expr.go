@@ -3,7 +3,8 @@ package node
 import (
 	"fmt"
 
-	"github.com/avm-collection/anasm/pkg/agen"
+	"github.com/avm-collection/agen"
+
 	"github.com/avm-collection/anasm/internal/token"
 )
 

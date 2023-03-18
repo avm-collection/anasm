@@ -46,3 +46,4 @@
 - `1.20.9`:  Implicit pushes
 - `1.20.10`: Fix the disassembler
 - `1.20.11`: Fix disassembler errors
+- `1.21.11`: Moved AGEN and errors to separate repos, fix no error on undefined identifiers

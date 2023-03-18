@@ -5,8 +5,9 @@ import (
 	"strconv"
 	"path/filepath"
 
-	"github.com/avm-collection/anasm/pkg/errors"
-	"github.com/avm-collection/anasm/pkg/agen"
+	"github.com/avm-collection/goerror"
+	"github.com/avm-collection/agen"
+
 	"github.com/avm-collection/anasm/internal/lexer"
 	"github.com/avm-collection/anasm/internal/token"
 	"github.com/avm-collection/anasm/internal/node"
@@ -38,7 +39,7 @@ func (p *Parser) next() {
 	}
 
 	if p.tok = p.l.NextToken(); p.tok.Type == token.Error {
-		errors.Error(p.tok.Where, p.tok.Data)
+		goerror.Error(p.tok.Where, p.tok.Data)
 		os.Exit(1)
 	}
 }
@@ -50,7 +51,7 @@ func (p *Parser) parseFile(input, path string) {
 	p.l = lexer.New(input, path)
 
 	if p.tok = p.l.NextToken(); p.tok.Type == token.Error {
-		errors.Error(p.tok.Where, p.tok.Data)
+		goerror.Error(p.tok.Where, p.tok.Data)
 		os.Exit(1)
 	}
 
@@ -89,7 +90,7 @@ func (p *Parser) evalInclude() {
 
 	data, err := os.ReadFile(toInclude)
 	if err != nil {
-		errors.Error(path.GetToken().Where, "Could not open file '%v'", toInclude)
+		goerror.Error(path.GetToken().Where, "Could not open file '%v'", toInclude)
 		return
 	}
 
@@ -106,8 +107,8 @@ func (p *Parser) parseMacro() *node.Macro {
 
 	n.Name = p.parseId()
 	if p.tok.Type != token.Equals {
-		errors.Error(p.tok.Where, "Expected assignment with '%v', got %v",
-		             token.Equals, token.Dots, p.tok)
+		goerror.Error(p.tok.Where, "Expected assignment with '%v', got %v",
+		              token.Equals, p.tok)
 		p.next()
 		return nil
 	}
@@ -125,8 +126,8 @@ func (p *Parser) parseLet() node.Statement {
 	n.Type = p.parseType()
 
 	if p.tok.Type != token.Equals {
-		errors.Error(p.tok.Where, "Expected assignment with '%v' or size with '%v', got %v",
-		             token.Equals, token.Dots, p.tok)
+		goerror.Error(p.tok.Where, "Expected assignment with '%v' or size with '%v', got %v",
+		              token.Equals, token.Dots, p.tok)
 		p.next()
 		return nil
 	}
@@ -204,7 +205,7 @@ func (p *Parser) parseExpr() node.Expr {
 		} else if p.tok.Type.IsType() {
 			return p.parseType()
 		} else {
-			errors.Error(p.tok.Where, "Unexpected %v in expression", p.tok)
+			goerror.Error(p.tok.Where, "Unexpected %v in expression", p.tok)
 			p.next()
 			return nil
 		}
@@ -215,13 +216,13 @@ func (p *Parser) parseId() *node.Id {
 	n := &node.Id{Token: p.tok}
 
 	if p.tok.Type != token.Id {
-		errors.Error(p.tok.Where, "Expected identifier, got %v", p.tok)
+		goerror.Error(p.tok.Where, "Expected identifier, got %v", p.tok)
 		p.next()
 		return nil
 	}
 
 	if _, ok := agen.Insts[p.tok.Data]; ok {
-		errors.Error(p.tok.Where, "Expected identifier, got instruction '%v'", p.tok.Data)
+		goerror.Error(p.tok.Where, "Expected identifier, got instruction '%v'", p.tok.Data)
 		p.next()
 		return nil
 	}
@@ -235,7 +236,7 @@ func (p *Parser) parseString() *node.String {
 	n := &node.String{Token: p.tok}
 
 	if p.tok.Type != token.String {
-		errors.Error(p.tok.Where, "Expected string, got %v", p.tok)
+		goerror.Error(p.tok.Where, "Expected string, got %v", p.tok)
 		p.next()
 		return nil
 	}
@@ -256,7 +257,7 @@ func (p *Parser) parseInt() *node.Int {
 	case token.Char: n.Value    = int64(p.tok.Data[0])
 
 	default:
-		errors.Error(p.tok.Where, "Expected an integer or a character, got %v", p.tok)
+		goerror.Error(p.tok.Where, "Expected an integer or a character, got %v", p.tok)
 		p.next()
 		return nil
 	}
@@ -269,7 +270,7 @@ func (p *Parser) parseFloat() *node.Float {
 	n := &node.Float{Token: p.tok}
 
 	if p.tok.Type != token.Float {
-		errors.Error(p.tok.Where, "Expected a float, got %v", p.tok)
+		goerror.Error(p.tok.Where, "Expected a float, got %v", p.tok)
 		p.next()
 		return nil
 	}
@@ -289,7 +290,7 @@ func (p *Parser) parseType() *node.Type {
 	case token.TypeInt64, token.TypeFloat64: n.Type = agen.I64
 
 	default:
-		errors.Error(p.tok.Where, "Expected a type (byte/char/i16/i32/i64/f164), got %v", p.tok)
+		goerror.Error(p.tok.Where, "Expected a type (byte/char/i16/i32/i64/f164), got %v", p.tok)
 		p.next()
 		return nil
 	}
@@ -307,7 +308,7 @@ func (p *Parser) parseFunc() node.Expr {
 	} else if p.tok.Type.IsBinOp() {
 		return p.parseBinOp(start)
 	} else {
-		errors.Error(p.tok.Where, "Expected function, got %v", p.tok)
+		goerror.Error(p.tok.Where, "Expected function, got %v", p.tok)
 		p.next()
 		return nil
 	}
@@ -322,14 +323,14 @@ func (p *Parser) parseSizeOf(start token.Token) *node.SizeOf {
 	} else if p.tok.Type.IsType() {
 		n.Type = p.parseType()
 	} else {
-		errors.Error(p.tok.Where, "Expected an identifier or a type, got %v", p.tok)
+		goerror.Error(p.tok.Where, "Expected an identifier or a type, got %v", p.tok)
 		p.next()
 		return nil
 	}
 
 	if p.tok.Type != token.RParen {
-		errors.Error(p.tok.Where, "Expected matching '%v', got %v", token.RParen, p.tok)
-		errors.Note(start.Where, "Opened here")
+		goerror.Error(p.tok.Where, "Expected matching '%v', got %v", token.RParen, p.tok)
+		goerror.Note(start.Where, "Opened here")
 		return nil
 	}
 	p.next()
@@ -347,8 +348,8 @@ func (p *Parser) parseBinOp(start token.Token) *node.BinOp {
 	}
 
 	if p.tok.Type != token.RParen {
-		errors.Error(p.tok.Where, "Expected matching '%v', got %v", token.RParen, p.tok)
-		errors.Note(start.Where, "Opened here")
+		goerror.Error(p.tok.Where, "Expected matching '%v', got %v", token.RParen, p.tok)
+		goerror.Note(start.Where, "Opened here")
 		return nil
 	}
 	p.next()
